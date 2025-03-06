@@ -1,0 +1,13 @@
+class Solicitud {
+    constructor(tracking_id, ticket_id, usuario, email, resolutor, estado, fecha_creacion) {
+        this.tracking_id = tracking_id;
+        this.ticket_id = ticket_id;
+        this.usuario = usuario;
+        this.email = email;
+        this.resolutor = resolutor;
+        this.estado = estado || 'pendiente';
+        this.fecha_creacion = fecha_creacion || new Date();
+    }
+}
+
+module.exports = Solicitud;
