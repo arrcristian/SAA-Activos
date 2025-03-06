@@ -3,55 +3,53 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
 class UsuarioService {
-    // Crear un nuevo usuario
-    async createUsuario({ usuario, pass }) {
-        if (!usuario || !pass) {
-            throw { status: 400, message: "Usuario y contraseña son requeridos" };
+    async createUsuario({ usuario, correo, nombre, contrasena, tipo }) {
+        if (!usuario || !correo || !nombre || !contrasena || !tipo) {
+            throw { status: 400, message: "Todos los campos son requeridos" };
         }
 
-        // Verificar si el usuario ya existe
-        const usuarioExistente = await UsuarioRepository.obtenerUsuarioPorNombre(usuario);
+        const usuarioExistente = await UsuarioRepository.obtenerUsuarioPorUsuario(usuario);
         if (usuarioExistente) {
-            throw { status: 409, message: "El usuario ya existe" };
+            throw { status: 409, message: "El nombre de usuario ya está en uso" };
         }
 
-        // Crear usuario en la base de datos
-        const userId = await UsuarioRepository.crearUsuario(usuario, pass);
-        return { id: userId, usuario };
+        const correoExistente = await UsuarioRepository.obtenerUsuarioPorCorreo(correo);
+        if (correoExistente) {
+            throw { status: 409, message: "El correo ya está registrado" };
+        }
+
+        const userId = await UsuarioRepository.crearUsuario(usuario, correo, nombre, contrasena, tipo);
+        return { id: userId, usuario, correo, nombre, tipo };
     }
 
-    // Obtener todos los usuarios
     async getAllUsuarios() {
         return await UsuarioRepository.obtenerTodosLosUsuarios();
     }
 
-    // Iniciar sesión
-    async loginUsuario(usuario, pass) {
-        if (!usuario || !pass) {
+    async loginUsuario(usuario, contrasena) {
+        if (!usuario || !contrasena) {
             throw { status: 400, message: "Usuario y contraseña son requeridos" };
         }
 
-        // Buscar usuario en la BD
-        const usuarioDB = await UsuarioRepository.obtenerUsuarioPorNombre(usuario);
+        const usuarioDB = await UsuarioRepository.obtenerUsuarioPorUsuario(usuario);
         if (!usuarioDB) {
             throw { status: 401, message: "Credenciales incorrectas" };
         }
 
-        // Verificar contraseña
-        const passwordValido = await bcrypt.compare(pass, usuarioDB.pass);
+        const passwordValido = await bcrypt.compare(contrasena, usuarioDB.contrasena);
         if (!passwordValido) {
             throw { status: 401, message: "Credenciales incorrectas" };
         }
 
-        // Generar token JWT
         const token = jwt.sign(
-            { id: usuarioDB.id, usuario: usuarioDB.usuario },
+            { id: usuarioDB.id, usuario: usuarioDB.usuario, tipo: usuarioDB.tipo },
             process.env.JWT_SECRET,
             { expiresIn: '2h' }
         );
 
-        return { token };
+        return { token, usuario: usuarioDB.usuario, tipo: usuarioDB.tipo };
     }
 }
 
 module.exports = new UsuarioService();
+
