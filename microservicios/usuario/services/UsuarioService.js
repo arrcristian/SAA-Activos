@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
 class UsuarioService {
+
     async createUsuario({ usuario, correo, nombre, contrasena, tipo }) {
         if (!usuario || !correo || !nombre || !contrasena || !tipo) {
             throw { status: 400, message: "Todos los campos son requeridos" };
@@ -43,6 +44,7 @@ class UsuarioService {
 
         const token = jwt.sign(
             { id: usuarioDB.id, usuario: usuarioDB.usuario, tipo: usuarioDB.tipo },
+
             process.env.JWT_SECRET,
             { expiresIn: '2h' }
         );
@@ -52,4 +54,3 @@ class UsuarioService {
 }
 
 module.exports = new UsuarioService();
-

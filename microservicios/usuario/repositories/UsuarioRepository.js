@@ -107,4 +107,3 @@ class UsuarioRepository {
 }
 
 module.exports = new UsuarioRepository();
-
