@@ -1,8 +1,13 @@
-const ticketService = require('../services/ticketService');
+const { procesarTickets } = require('../services/ticketService');
 
-const checkEvents = async (req, res) => {
-    await ticketService.checkForTicketEvents();
-    res.json({ message: "Verificación completada" });
+const checkEventos = async (req, res) => {
+    try {
+        await procesarTickets();
+        res.status(200).json({ mensaje: "Eventos procesados correctamente" });
+    } catch (error) {
+        console.error("Error procesando eventos:", error);
+        res.status(500).json({ error: "Error procesando eventos" });
+    }
 };
 
-module.exports = { checkEvents };
+module.exports = { checkEventos };

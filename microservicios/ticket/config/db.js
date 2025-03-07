@@ -11,4 +11,16 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
-module.exports = pool;
+// Función para probar la conexión
+const connectDatabase = async () => {
+    try {
+        const connection = await pool.getConnection();
+        console.log("✅ Conectado a la base de datos");
+        connection.release(); // Liberar conexión
+    } catch (error) {
+        console.error("❌ Error conectando a la base de datos:", error);
+        process.exit(1); // Detener el proceso si hay error
+    }
+};
+
+module.exports = { pool, connectDatabase };

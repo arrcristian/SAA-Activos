@@ -1,9 +1,6 @@
 const pool = require('../config/db');
-const Solicitud = require('../models/solicitudModel');
 
-const crearSolicitud = async (solicitud) => {
-    const { tracking_id, ticket_id, usuario, email, resolutor, estado } = solicitud;
-
+const crearSolicitud = async ({ tracking_id, ticket_id, usuario, email, resolutor, estado }) => {
     try {
         const [result] = await pool.query(
             `INSERT INTO solicitudes (tracking_id, ticket_id, usuario, email, resolutor, estado) 
@@ -13,7 +10,7 @@ const crearSolicitud = async (solicitud) => {
 
         return result.affectedRows > 0;
     } catch (error) {
-        console.error("Error en el repositorio al crear solicitud:", error);
+        console.error("❌ Error al crear solicitud:", error);
         throw error;
     }
 };
