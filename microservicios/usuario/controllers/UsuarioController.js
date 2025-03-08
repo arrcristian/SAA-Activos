@@ -50,17 +50,6 @@ class UsuarioController {
             res.status(error.status || 500).json({ message: error.message });
         }
     }
-
-    async recuperarContrasena(req, res) {
-        try {
-            const { correo } = req.body;
-            const respuesta = await UsuarioService.recuperarContrasena(correo);
-            res.status(200).json(respuesta);
-        } catch (error) {
-            console.error("Error en recuperación de contraseña:", error.message);
-            res.status(error.status || 500).json({ message: error.message });
-        }
-    }
 }
 
 module.exports = new UsuarioController();
