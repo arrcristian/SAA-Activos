@@ -8,6 +8,8 @@ router.post('/crear', UsuarioController.createUsuario);
 router.get('/', UsuarioController.getAllUsuarios);
 router.post('/login', UsuarioController.loginUsuario);
 router.get('/perfil', verificarToken, UsuarioController.obtenerPerfil);
+router.post('/recuperar', UsuarioController.recuperarContrasena);
+
 
 
 
