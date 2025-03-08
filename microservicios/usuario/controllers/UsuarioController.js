@@ -23,16 +23,15 @@ class UsuarioController {
 
     async loginUsuario(req, res) {
         try {
-            const { usuario, pass } = req.body;
-            const resultado = await UsuarioService.loginUsuario(usuario, pass);
+            const { usuario, contrasena } = req.body;
+            const resultado = await UsuarioService.loginUsuario(usuario, contrasena);
             res.json(resultado);
         } catch (error) {
             console.error("Error en login:", error.message);
             res.status(error.status || 500).json({ message: error.message });
         }
     }
-<<<<<<< Updated upstream
-=======
+
 
     async obtenerPerfil(req, res) {
         try {
@@ -52,7 +51,7 @@ class UsuarioController {
             res.status(error.status || 500).json({ message: error.message });
         }
     }
->>>>>>> Stashed changes
+
 }
 
 module.exports = new UsuarioController();

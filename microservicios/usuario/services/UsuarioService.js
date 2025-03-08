@@ -77,7 +77,7 @@ class UsuarioService {
             { id: usuarioDB.id, usuario: usuarioDB.usuario, tipo: usuarioDB.tipo },
 
             process.env.JWT_SECRET,
-            { expiresIn: '2h' }
+            { expiresIn: '60s' }
         );
     
         return { token, usuario: usuarioDB.usuario, tipo: usuarioDB.tipo };
