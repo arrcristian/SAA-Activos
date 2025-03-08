@@ -6,6 +6,11 @@ const UsuarioController = require('../controllers/UsuarioController');
 router.post('/crear', UsuarioController.createUsuario);
 router.get('/', UsuarioController.getAllUsuarios);
 router.post('/login', UsuarioController.loginUsuario);
+<<<<<<< Updated upstream
+=======
+router.get('/perfil', verificarToken, UsuarioController.obtenerPerfil);
+router.post('/recuperar', UsuarioController.recuperarContrasena);
+>>>>>>> Stashed changes
 
 
 
