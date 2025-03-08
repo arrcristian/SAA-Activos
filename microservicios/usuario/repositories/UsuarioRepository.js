@@ -23,7 +23,7 @@ class UsuarioRepository {
             const [rows] = await connection.execute('SELECT * FROM usuarios WHERE usuario = ?', [usuario]);
             return rows.length > 0 ? rows[0] : null;
         } catch (error) {
-            console.error('Error al obtener usuario por usuario:', error);
+            console.error('Error al obtener usuario por nombre de usuario:', error);
             throw error;
         } finally {
             if (connection) connection.release();
@@ -76,7 +76,7 @@ class UsuarioRepository {
         }
     }
 
-    async actualizarPassword(id, nuevaContrasena) {
+    async actualizarContrasena(id, nuevaContrasena) {
         let connection;
         try {
             connection = await pool.getConnection();
@@ -99,6 +99,52 @@ class UsuarioRepository {
             return true;
         } catch (error) {
             console.error('Error al eliminar usuario:', error);
+            throw error;
+        } finally {
+            if (connection) connection.release();
+        }
+    }
+
+    async aumentarIntentoFallido(id) {
+        let connection;
+        try {
+            connection = await pool.getConnection();
+            await connection.execute(
+                'UPDATE usuarios SET intentos_fallidos = intentos_fallidos + 1 WHERE id = ?',
+                [id]
+            );
+        } catch (error) {
+            console.error('Error al aumentar intentos fallidos:', error);
+            throw error;
+        } finally {
+            if (connection) connection.release();
+        }
+    }
+
+    async bloquearUsuario(id) {
+        let connection;
+        try {
+            connection = await pool.getConnection();
+            const bloqueoHasta = new Date(Date.now() + 5 * 60 * 1000); // Bloquear por 5 minutos
+            await connection.execute(
+                'UPDATE usuarios SET bloqueado_hasta = ?, intentos_fallidos = 0 WHERE id = ?',
+                [bloqueoHasta, id]
+            );
+        } catch (error) {
+            console.error('Error al bloquear usuario:', error);
+            throw error;
+        } finally {
+            if (connection) connection.release();
+        }
+    }
+
+    async resetearIntentosFallidos(id) {
+        let connection;
+        try {
+            connection = await pool.getConnection();
+            await connection.execute('UPDATE usuarios SET intentos_fallidos = 0 WHERE id = ?', [id]);
+        } catch (error) {
+            console.error('Error al resetear intentos fallidos:', error);
             throw error;
         } finally {
             if (connection) connection.release();

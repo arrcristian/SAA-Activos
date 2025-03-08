@@ -7,5 +7,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     correo VARCHAR(100) UNIQUE NOT NULL,
     nombre varchar(100) NOT NULL,
     contrasena VARCHAR(255) NOT NULL,
-    tipo ENUM('cliente', 'resolutor') NOT NULL
+    tipo ENUM('cliente', 'resolutor') NOT NULL,
+    intentos_fallidos INT DEFAULT 0,
+    bloqueado_hasta DATETIME NULL
 );
