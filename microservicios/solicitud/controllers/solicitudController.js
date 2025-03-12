@@ -8,15 +8,16 @@ const generarTrackingId = () => crypto.randomBytes(6).toString('hex').toUpperCas
 
 const crearNuevaSolicitud = async (req, res) => {
     try {
-        const { ticket_id, usuario, email, resolutor } = req.body;
+        const { ticket_id, numero_ticket, usuario, email, resolutor , topico, departamento} = req.body;
 
-        if (!ticket_id || !usuario || !email || !resolutor) {
+        if (!ticket_id || !numero_ticket || !usuario || !email || !resolutor || !topico || !departamento) {
             return res.status(400).json({ error: "Faltan datos requeridos." });
         }
 
         // Generar tracking ID
         const tracking_id = generarTrackingId();
-        const nuevaSolicitud = new Solicitud(tracking_id, ticket_id, usuario, email, resolutor);
+        //const tracking_id = numero_ticket;
+        const nuevaSolicitud = new Solicitud(tracking_id, ticket_id, usuario, email, resolutor, topico, departamento);
 
         // Guardar en la base de datos
         const guardado = await crearSolicitud(nuevaSolicitud);
