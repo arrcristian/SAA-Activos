@@ -23,9 +23,9 @@ const iniciarConsumidor = async () => {
                     const evento = JSON.parse(msg.content.toString());
                     console.log("✅ Mensaje recibido:", evento);
 
-                    const { ticket_id, usuario, email, resolutor } = evento;
+                    const { ticket_id, numero_ticket, usuario, email, resolutor, topico, departamento } = evento;
 
-                    if (!ticket_id || !usuario || !email || !resolutor) {
+                    if (!ticket_id || !numero_ticket || !usuario || !email || !resolutor || !topico || !departamento) {
                         console.error("❌ Evento inválido, faltan datos requeridos.");
                         channel.nack(msg, false, false); // Rechaza el mensaje sin reintentar
                         return;
@@ -41,6 +41,8 @@ const iniciarConsumidor = async () => {
                         usuario,
                         email,
                         resolutor,
+                        topico,
+                        departamento,
                         estado: 'Pendiente'
                     };
 

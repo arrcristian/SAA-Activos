@@ -3,27 +3,42 @@ const { sendMessage } = require('../config/rabbitmq');
 
 const obtenerEventosPendientes = async () => {
     console.log("🔍 Realizando consulta a la base de datos para buscar eventos pendientes...");
-    const [rows] = await db.pool.query("SELECT * FROM ticket_eventos WHERE procesado = 0"); // 🔴 Cambié db.query → db.pool.query
+    const [rows] = await db.pool.query(`
+        SELECT ticket_id, topic_id, user_id, user_email_id, staff_id, dept_id, numero_ticket, fecha_creacion
+        FROM ticket_eventos
+    `);
+
     return rows;
 };
 
+
 const marcarEventoComoProcesado = async (id) => {
-    await db.pool.query("UPDATE ticket_eventos SET procesado = 1 WHERE id = ?", [id]); // 🔴 Cambié db.query → db.pool.query
-    console.log(`✅ Evento con ID ${id} marcado como procesado.`);
+    await db.pool.query("DELETE FROM ticket_eventos WHERE ticket_id = ?", [id]); // 🔴 Cambié db.query → db.pool.query
+    console.log(`✅ Evento con ID ${id} atendido correctamente.`);
 };
 
 const obtenerTicketPorId = async (ticket_id) => {
     const [rows] = await db.pool.query(`
-        SELECT t.id AS ticket_id, u.nombre AS usuario, u.email, r.nombre AS resolutor, tp.nombre AS tema
-        FROM tickets t
-        JOIN topics tp ON t.topic_id = tp.id
-        JOIN users u ON t.user_id = u.id
-        LEFT JOIN users r ON t.resolutor_id = r.id
-        WHERE t.id = ?`, [ticket_id]);
+        SELECT 
+            t.ticket_id,
+            t.number AS numero_ticket,
+            u.name AS usuario,
+            ue.address AS email,
+            s.username AS resolutor,
+            tp.topic AS topico,
+            d.name AS departamento
+        FROM ost_ticket t
+        JOIN ost_user u ON t.user_id = u.id
+        JOIN ost_user_email ue ON u.default_email_id = ue.id
+        LEFT JOIN ost_staff s ON t.staff_id = s.staff_id
+        JOIN ost_help_topic tp ON t.topic_id = tp.topic_id
+        JOIN ost_department d ON t.dept_id = d.id
+        WHERE t.ticket_id = ?
+    `, [ticket_id]);
 
+    console.log('Se pudo obtener el ticket');
     return rows.length > 0 ? rows[0] : null;
 };
-
 
 const procesarEventosPendientes = async () => {
     const eventos = await obtenerEventosPendientes();
@@ -34,12 +49,16 @@ const procesarEventosPendientes = async () => {
     }
 
     for (const evento of eventos) {
-        console.log(`📌 Procesando evento con ID ${evento.id} del ticket ${evento.ticket_id}...`);
+        console.log(`📌 Procesando evento con ID ${evento.ticket_id}...`);
         const ticket = await obtenerTicketPorId(evento.ticket_id);
+        console.log(ticket);
+
         if (ticket) {
             console.log(`📤 Enviando ticket ${ticket.ticket_id} a la cola de RabbitMQ.`);
             await sendMessage(ticket);
-            await marcarEventoComoProcesado(evento.id);
+            await marcarEventoComoProcesado(evento.ticket_id);
+        }else{
+            console.log('no hubo ticket');
         }
     }
 };

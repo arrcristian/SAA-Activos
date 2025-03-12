@@ -20,7 +20,7 @@ const startServer = async () => {
     setInterval(async () => {
         console.log("⏳ Ejecutando verificación de eventos...");
         await procesarEventosPendientes();
-    }, 5000); // 5000 ms = 5 segundos
+    }, 10000); // 10000 ms = 10 segundos
 };
 
 startServer();
