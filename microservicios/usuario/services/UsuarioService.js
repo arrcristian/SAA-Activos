@@ -5,38 +5,11 @@ const moment = require('moment');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
+async function verificarPassword(contrasenaIngresada, hashAlmacenado) {
+    return await bcrypt.compare(contrasenaIngresada, hashAlmacenado);
+}
+
 class UsuarioService {
-
-    async createUsuario({ usuario, correo, nombre, contrasena, tipo }) {
-        if (!usuario || !correo || !nombre || !contrasena || !tipo) {
-            throw { status: 400, message: "Todos los campos son requeridos" };
-        }
-
-        // Validar usuario (5-20 caracteres alfanuméricos)
-        const usuarioRegex = /^[a-zA-Z0-9]{5,20}$/;
-        if (!usuarioRegex.test(usuario)) {
-            throw { status: 400, message: "El nombre de usuario debe tener entre 5 y 20 caracteres alfanuméricos" };
-        }
-
-        // Validar contraseña
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#!_])[A-Za-z\d@#!_]{8,15}$/;
-        if (!passwordRegex.test(contrasena)) {
-            throw { status: 400, message: "La contraseña debe tener entre 8 y 15 caracteres, incluir una mayúscula, una minúscula, un número y un carácter especial (@, #, !, _)." };
-        }
-
-        const usuarioExistente = await UsuarioRepository.obtenerUsuarioPorUsuario(usuario);
-        if (usuarioExistente) {
-            throw { status: 409, message: "El nombre de usuario ya está en uso" };
-        }
-
-        const correoExistente = await UsuarioRepository.obtenerUsuarioPorCorreo(correo);
-        if (correoExistente) {
-            throw { status: 409, message: "El correo ya está registrado" };
-        }
-
-        const userId = await UsuarioRepository.crearUsuario(usuario, correo, nombre, contrasena, tipo);
-        return { id: userId, usuario, correo, nombre, tipo };
-    }
 
     async getAllUsuarios() {
         return await UsuarioRepository.obtenerTodosLosUsuarios();
@@ -46,41 +19,26 @@ class UsuarioService {
         if (!usuario || !contrasena) {
             throw { status: 400, message: "Usuario y contraseña son requeridos" };
         }
-    
+
         const usuarioDB = await UsuarioRepository.obtenerUsuarioPorUsuario(usuario);
         if (!usuarioDB) {
             throw { status: 401, message: "El usuario no existe" };
         }
-    
-        // Verificar si el usuario está bloqueado
-        if (usuarioDB.bloqueado_hasta && new Date(usuarioDB.bloqueado_hasta) > new Date()) {
-            throw { status: 403, message: "Cuenta bloqueada. Intenta más tarde." };
-        }
-    
-        const passwordValido = await bcrypt.compare(contrasena, usuarioDB.contrasena);
+
+        // Verificar la contraseña con bcrypt
+        const passwordValido = await verificarPassword(contrasena, usuarioDB.contrasena);
         if (!passwordValido) {
-            await UsuarioRepository.aumentarIntentoFallido(usuarioDB.id);
-    
-            // Bloquear cuenta si se llega a 3 intentos fallidos
-            if (usuarioDB.intentos_fallidos + 1 >= 3) {
-                await UsuarioRepository.bloquearUsuario(usuarioDB.id);
-                throw { status: 403, message: "Cuenta bloqueada por 5 minutos." };
-            }
-    
             throw { status: 401, message: "Contraseña incorrecta" };
         }
-    
-        // Si inicia sesión correctamente, resetear intentos fallidos
-        await UsuarioRepository.resetearIntentosFallidos(usuarioDB.id);
-    
-        const token = jwt.sign(
-            { id: usuarioDB.id, usuario: usuarioDB.usuario, tipo: usuarioDB.tipo },
 
+        // Generar token
+        const token = jwt.sign(
+            { id: usuarioDB.id, usuario: usuarioDB.usuario },
             process.env.JWT_SECRET,
-            { expiresIn: '60s' }
+            { expiresIn: '60m' }
         );
-    
-        return { token, usuario: usuarioDB.usuario, tipo: usuarioDB.tipo };
+
+        return { token, usuario: usuarioDB.usuario };
     }
     
 
