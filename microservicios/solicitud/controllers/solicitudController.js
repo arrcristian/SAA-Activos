@@ -1,6 +1,8 @@
 const Solicitud = require('../models/solicitudModel');
-const { crearSolicitud } = require('../repositories/solicitudRepository');
+const { crearSolicitud, actualizarEstadoEnBD } = require('../repositories/solicitudRepository');
+const { obtenerCorreoSupervisor } = require('../repositories/contactoRepository');
 const sendEmail = require('../services/emailService'); // Importación corregida
+const { cambiarEstadoSolicitud, cancelarSolicitud } = require('../services/solicitudService');
 const crypto = require('crypto');
 
 // Función para generar un Tracking ID único
@@ -8,7 +10,7 @@ const generarTrackingId = () => crypto.randomBytes(6).toString('hex').toUpperCas
 
 const crearNuevaSolicitud = async (req, res) => {
     try {
-        const { ticket_id, numero_ticket, usuario, email, resolutor , topico, departamento} = req.body;
+        const { ticket_id, numero_ticket, usuario, email, resolutor, topico, departamento } = req.body;
 
         if (!ticket_id || !numero_ticket || !usuario || !email || !resolutor || !topico || !departamento) {
             return res.status(400).json({ error: "Faltan datos requeridos." });
@@ -16,18 +18,50 @@ const crearNuevaSolicitud = async (req, res) => {
 
         // Generar tracking ID
         const tracking_id = generarTrackingId();
-        //const tracking_id = numero_ticket;
         const nuevaSolicitud = new Solicitud(tracking_id, ticket_id, usuario, email, resolutor, topico, departamento);
 
         // Guardar en la base de datos
         const guardado = await crearSolicitud(nuevaSolicitud);
 
         if (guardado) {
-            // Enviar correo con la clave de rastreo
-            const asunto = "Confirmación de solicitud";
-            const mensaje = `Hola ${usuario},\n\nTu solicitud ha sido registrada exitosamente.\n\nClave de rastreo: ${tracking_id}\n\nGracias por usar nuestro servicio.`;
-            
-            await sendEmail(email, asunto, mensaje);
+            // Enviar correo al usuario confirmando la solicitud
+            const asuntoUsuario = "Confirmación de solicitud";
+            const mensajeUsuario = `Hola ${usuario},\n\nTu solicitud ha sido registrada exitosamente.\n\nClave de rastreo: ${tracking_id}\n\nGracias por usar nuestro servicio.`;
+
+            await sendEmail(email, asuntoUsuario, mensajeUsuario, false);
+
+            // Obtener correo del supervisor
+            const supervisor = await obtenerCorreoSupervisor(departamento);
+
+            if (supervisor) {
+                // Crear enlaces de aprobación y cancelación
+                const enlaceAprobar = `${process.env.APP_URL}/api/solicitudes/respuesta?clave_rastreo=${tracking_id}&respuesta=si`;
+                const enlaceRechazar = `${process.env.APP_URL}/api/solicitudes/respuesta?clave_rastreo=${tracking_id}&respuesta=no`;
+
+                const asuntoSupervisor = "Nueva Solicitud Pendiente";
+                const mensajeSupervisor = `
+    <html>
+    <body>
+        <p>Hola ${supervisor.nombre},</p>
+        <p>Se ha generado una nueva solicitud.</p>
+        <p><strong>Clave de rastreo:</strong> ${tracking_id}</p>
+        <p><strong>Usuario:</strong> ${usuario}</p>
+        <p><strong>Departamento:</strong> ${departamento}</p>
+        <p>¿Deseas aprobar o cancelar la solicitud?</p>
+        <p>
+            <a href="${enlaceAprobar}" style="display:inline-block;padding:10px;background-color:green;color:white;text-decoration:none;border-radius:5px;">
+                ✅ Aprobar
+            </a> 
+            &nbsp;&nbsp;
+            <a href="${enlaceRechazar}" style="display:inline-block;padding:10px;background-color:red;color:white;text-decoration:none;border-radius:5px;">
+                ❌ Rechazar
+            </a>
+        </p>
+    </body>
+    </html>
+`;
+                await sendEmail(supervisor.email, asuntoSupervisor, mensajeSupervisor, true);
+            }
 
             return res.status(201).json({ mensaje: "Solicitud creada con éxito", tracking_id });
         } else {
@@ -39,4 +73,78 @@ const crearNuevaSolicitud = async (req, res) => {
     }
 };
 
-module.exports = { crearNuevaSolicitud };
+const procesarRespuestaCorreo = async (req, res) => {
+    try {
+        const { clave_rastreo, respuesta } = req.query;
+
+        if (!clave_rastreo || !respuesta) {
+            return res.status(400).send("Solicitud inválida.");
+        }
+
+        let nuevoEstado = null;
+
+        if (respuesta === "si") {
+            nuevoEstado = "en proceso";
+        } else if (respuesta === "no") {
+            nuevoEstado = "cancelado";
+        } else {
+            return res.status(400).send("Respuesta no válida.");
+        }
+
+        const actualizado = await actualizarEstadoEnBD(clave_rastreo, nuevoEstado);
+
+        if (actualizado) {
+            return res.send(`✅ La solicitud con clave ${clave_rastreo} ha sido actualizada a: ${nuevoEstado}.`);
+        } else {
+            return res.status(404).send("❌ No se encontró la solicitud.");
+        }
+    } catch (error) {
+        console.error("❌ Error procesando respuesta del correo:", error);
+        return res.status(500).send("Error interno del servidor.");
+    }
+};
+
+const actualizarEstado = async (req, res) => {
+    try {
+        const { clave_rastreo } = req.params;
+
+        if (!clave_rastreo) {
+            return res.status(400).json({ error: "La clave de rastreo es obligatoria." });
+        }
+
+        const resultado = await cambiarEstadoSolicitud(clave_rastreo);
+
+        if (resultado.exito) {
+            return res.status(200).json({ mensaje: "Estado actualizado correctamente.", nuevoEstado: resultado.nuevoEstado });
+        } else {
+            return res.status(400).json({ error: resultado.mensaje });
+        }
+    } catch (error) {
+        console.error("❌ Error en actualizarEstado:", error);
+        return res.status(500).json({ error: "Error interno del servidor." });
+    }
+};
+
+const cancelar = async (req, res) => {
+    try {
+        const { clave_rastreo } = req.params;
+
+        if (!clave_rastreo) {
+            return res.status(400).json({ error: "La clave de rastreo es obligatoria." });
+        }
+
+        const resultado = await cancelarSolicitud(clave_rastreo);
+
+        if (resultado) {
+            return res.status(200).json({ mensaje: "Solicitud cancelada correctamente." });
+        } else {
+            return res.status(400).json({ error: "No se pudo cancelar la solicitud." });
+        }
+    } catch (error) {
+        console.error("❌ Error en cancelar:", error);
+        return res.status(500).json({ error: "Error interno del servidor." });
+    }
+};
+
+module.exports = { crearNuevaSolicitud, procesarRespuestaCorreo, actualizarEstado, cancelar };
+
