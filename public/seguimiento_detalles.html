@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalles de Solicitud</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            margin: 0;
+        }
+
+        .details-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        p {
+            font-size: 16px;
+            margin: 5px 0;
+        }
+
+        ul {
+            text-align: left;
+            padding: 0;
+            list-style: none;
+        }
+
+        li {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="details-container">
+        <h2>Detalles de la Solicitud</h2>
+        <p><strong>Ticket ID:</strong> <span id="ticket_id"></span></p>
+        <p><strong>Usuario:</strong> <span id="usuario"></span></p>
+        <p><strong>Resolutor:</strong> <span id="resolutor"></span></p>
+        <p><strong>Estado Actual:</strong> <span id="estado_actual"></span></p>
+        <h3>Historial de Seguimiento</h3>
+        <ul id="historial"></ul>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const data = JSON.parse(localStorage.getItem('seguimientoData'));
+            if (!data) {
+                alert('No hay datos disponibles.');
+                window.location.href = 'seguimiento.html';
+                return;
+            }
+
+            document.getElementById('ticket_id').textContent = data.ticket_id;
+            document.getElementById('usuario').textContent = data.usuario;
+            document.getElementById('resolutor').textContent = data.resolutor;
+            document.getElementById('estado_actual').textContent = data.estado_actual;
+
+            const historialContainer = document.getElementById('historial');
+            data.historial.forEach(actualizacion => {
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${actualizacion.fecha_hora}</strong>: ${actualizacion.descripcion} (Estado: ${actualizacion.estado}, Resolutor: ${actualizacion.resolutor})`;
+                historialContainer.appendChild(li);
+            });
+        });
+    </script>
+</body>
+</html>
