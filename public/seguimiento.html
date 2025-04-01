@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento de Solicitud</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            margin: 0;
+        }
+
+        .tracking-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        input {
+            width: calc(100% - 20px);
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="tracking-container">
+        <h2>Seguimiento de Solicitud</h2>
+        <label for="tracking_id">Ingrese su clave de rastreo:</label>
+        <input type="text" id="tracking_id" placeholder="Ejemplo: ABC123" required>
+        <button onclick="consultarSeguimiento()">Consultar</button>
+    </div>
+
+    <script>
+        async function consultarSeguimiento() {
+            const trackingId = document.getElementById('tracking_id').value.trim();
+            if (!trackingId) {
+                alert('Por favor, ingrese una clave de rastreo.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:4005/api/solicitudes/seguimiento/${trackingId}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Redirigir a la página de detalles
+                    localStorage.setItem('seguimientoData', JSON.stringify(data));
+                    window.location.href = 'seguimiento_detalles.html';
+                } else {
+                    alert(data.error);
+                }
+            } catch (error) {
+                console.error('Error al consultar:', error);
+                alert('Error al consultar el seguimiento.');
+            }
+        }
+    </script>
+</body>
+</html>
