@@ -2,6 +2,9 @@ const Solicitud = require('../models/solicitudModel');
 const { crearSolicitud, actualizarEstadoEnBD } = require('../repositories/solicitudRepository');
 const { obtenerCorreoSupervisor } = require('../repositories/contactoRepository');
 const sendEmail = require('../services/emailService'); // Importación corregida
+const { crearSolicitud, actualizarEstadoEnBD, obtenerSolicitudPorClave, obtenerHistorialDeSolicitud } = require('../repositories/solicitudRepository');
+const { obtenerCorreoSupervisor } = require('../repositories/contactoRepository');
+const sendEmail = require('../services/emailService');
 const { cambiarEstadoSolicitud, cancelarSolicitud } = require('../services/solicitudService');
 const crypto = require('crypto');
 
@@ -72,6 +75,39 @@ const crearNuevaSolicitud = async (req, res) => {
         return res.status(500).json({ error: "Error interno del servidor." });
     }
 };
+
+
+const obtenerSeguimiento = async (req, res) => {
+    try {
+        const { clave_rastreo } = req.params;
+
+        if (!clave_rastreo) {
+            return res.status(400).json({ error: "La clave de rastreo es obligatoria." });
+        }
+
+        const solicitud = await obtenerSolicitudPorClave(clave_rastreo);
+        if (!solicitud) {
+            console.log("⚠️ No se encontró ninguna solicitud con esa clave.");
+            return res.status(404).json({ error: "Solicitud no encontrada." });
+        }
+
+        const historial = await obtenerHistorialDeSolicitud(clave_rastreo);
+
+        return res.status(200).json({
+            ticket_id: solicitud.ticket_id,
+            usuario: solicitud.usuario,
+            resolutor: solicitud.resolutor,
+            estado_actual: solicitud.estado,
+            historial
+        });
+    } catch (error) {
+        console.error("❌ Error en obtenerSeguimiento:", error);
+        return res.status(500).json({ error: "Error interno del servidor." });
+    }
+};
+
+
+
 
 const procesarRespuestaCorreo = async (req, res) => {
     try {
@@ -146,5 +182,7 @@ const cancelar = async (req, res) => {
     }
 };
 
-module.exports = { crearNuevaSolicitud, procesarRespuestaCorreo, actualizarEstado, cancelar };
+
+module.exports = { crearNuevaSolicitud, obtenerSeguimiento, procesarRespuestaCorreo, actualizarEstado, cancelar };
+
 
