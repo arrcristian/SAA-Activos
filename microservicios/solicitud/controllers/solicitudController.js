@@ -1,9 +1,6 @@
 const Solicitud = require('../models/solicitudModel');
-const { crearSolicitud, actualizarEstadoEnBD } = require('../repositories/solicitudRepository');
 const { obtenerCorreoSupervisor } = require('../repositories/contactoRepository');
-const sendEmail = require('../services/emailService'); // Importación corregida
 const { crearSolicitud, actualizarEstadoEnBD, obtenerSolicitudPorClave, obtenerHistorialDeSolicitud } = require('../repositories/solicitudRepository');
-const { obtenerCorreoSupervisor } = require('../repositories/contactoRepository');
 const sendEmail = require('../services/emailService');
 const { cambiarEstadoSolicitud, cancelarSolicitud } = require('../services/solicitudService');
 const crypto = require('crypto');
