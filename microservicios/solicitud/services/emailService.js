@@ -2,27 +2,28 @@ const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST, // Servidor SMTP (por ejemplo, smtp.gmail.com)
-    port: process.env.EMAIL_PORT, // 465 (SSL) o 587 (TLS)
-    secure: process.env.EMAIL_SECURE === "true", // true para SSL, false para TLS
+    host: process.env.EMAIL_HOST,
+    port: process.env.EMAIL_PORT,
+    secure: process.env.EMAIL_SECURE === "true",
     auth: {
-        user: process.env.EMAIL_USER, // Tu correo
-        pass: process.env.EMAIL_PASS, // Tu contraseña o App Password
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
     },
     tls: {
-        rejectUnauthorized: false, // 🚨 Permite certificados autofirmados
+        rejectUnauthorized: false,
     },
 });
 
-// Función para enviar correo
-async function sendEmail(to, subject, text) {
+async function sendEmail(to, subject, message, isHtml = false) {
     try {
-        let info = await transporter.sendMail({
+        let mailOptions = {
             from: `"Soporte Técnico" <${process.env.EMAIL_USER}>`,
             to,
             subject,
-            text,
-        });
+            ...(isHtml ? { html: message } : { text: message }) // Asegurar formato
+        };
+
+        let info = await transporter.sendMail(mailOptions);
         console.log(`✅ Correo enviado: ${info.messageId}`);
     } catch (error) {
         console.error("❌ Error enviando correo:", error);

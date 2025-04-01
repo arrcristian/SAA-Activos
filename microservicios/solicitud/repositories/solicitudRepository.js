@@ -114,4 +114,6 @@ const cancelarSolicitudEnBD = async (clave_rastreo) => {
     }
 };
 
+
 module.exports = { crearSolicitud, obtenerSolicitudPorClave, actualizarEstadoEnBD, cancelarSolicitudEnBD, obtenerHistorialDeSolicitud };
+
