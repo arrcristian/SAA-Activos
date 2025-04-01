@@ -43,9 +43,7 @@ const crearSolicitud = async ({ tracking_id, ticket_id, usuario, email, resoluto
     }
 };
 
-<<<<<<< Updated upstream
-module.exports = { crearSolicitud };
-=======
+
 const obtenerSolicitudPorClave = async (clave_rastreo) => {
     try {
         const [rows] = await pool.query("SELECT * FROM solicitudes WHERE clave_rastreo = ?", [clave_rastreo]);
@@ -117,4 +115,3 @@ const cancelarSolicitudEnBD = async (clave_rastreo) => {
 };
 
 module.exports = { crearSolicitud, obtenerSolicitudPorClave, actualizarEstadoEnBD, cancelarSolicitudEnBD, obtenerHistorialDeSolicitud };
->>>>>>> Stashed changes

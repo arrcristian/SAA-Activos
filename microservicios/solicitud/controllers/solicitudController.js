@@ -1,13 +1,10 @@
 const Solicitud = require('../models/solicitudModel');
-<<<<<<< Updated upstream
 const { crearSolicitud } = require('../repositories/solicitudRepository');
 const sendEmail = require('../services/emailService'); // Importación corregida
-=======
 const { crearSolicitud, actualizarEstadoEnBD, obtenerSolicitudPorClave, obtenerHistorialDeSolicitud } = require('../repositories/solicitudRepository');
 const { obtenerCorreoSupervisor } = require('../repositories/contactoRepository');
 const sendEmail = require('../services/emailService');
 const { cambiarEstadoSolicitud, cancelarSolicitud } = require('../services/solicitudService');
->>>>>>> Stashed changes
 const crypto = require('crypto');
 
 // Función para generar un Tracking ID único
@@ -46,9 +43,6 @@ const crearNuevaSolicitud = async (req, res) => {
     }
 };
 
-<<<<<<< Updated upstream
-module.exports = { crearNuevaSolicitud };
-=======
 const obtenerSeguimiento = async (req, res) => {
     try {
         const { clave_rastreo } = req.params;
@@ -155,4 +149,3 @@ const cancelar = async (req, res) => {
 
 module.exports = { crearNuevaSolicitud, obtenerSeguimiento, procesarRespuestaCorreo, actualizarEstado, cancelar };
 
->>>>>>> Stashed changes
