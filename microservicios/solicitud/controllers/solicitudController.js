@@ -1,6 +1,13 @@
 const Solicitud = require('../models/solicitudModel');
+<<<<<<< Updated upstream
 const { crearSolicitud } = require('../repositories/solicitudRepository');
 const sendEmail = require('../services/emailService'); // Importación corregida
+=======
+const { crearSolicitud, actualizarEstadoEnBD, obtenerSolicitudPorClave, obtenerHistorialDeSolicitud } = require('../repositories/solicitudRepository');
+const { obtenerCorreoSupervisor } = require('../repositories/contactoRepository');
+const sendEmail = require('../services/emailService');
+const { cambiarEstadoSolicitud, cancelarSolicitud } = require('../services/solicitudService');
+>>>>>>> Stashed changes
 const crypto = require('crypto');
 
 // Función para generar un Tracking ID único
@@ -39,4 +46,113 @@ const crearNuevaSolicitud = async (req, res) => {
     }
 };
 
+<<<<<<< Updated upstream
 module.exports = { crearNuevaSolicitud };
+=======
+const obtenerSeguimiento = async (req, res) => {
+    try {
+        const { clave_rastreo } = req.params;
+
+        if (!clave_rastreo) {
+            return res.status(400).json({ error: "La clave de rastreo es obligatoria." });
+        }
+
+        const solicitud = await obtenerSolicitudPorClave(clave_rastreo);
+        if (!solicitud) {
+            console.log("⚠️ No se encontró ninguna solicitud con esa clave.");
+            return res.status(404).json({ error: "Solicitud no encontrada." });
+        }
+
+        const historial = await obtenerHistorialDeSolicitud(clave_rastreo);
+
+        return res.status(200).json({
+            ticket_id: solicitud.ticket_id,
+            usuario: solicitud.usuario,
+            resolutor: solicitud.resolutor,
+            estado_actual: solicitud.estado,
+            historial
+        });
+    } catch (error) {
+        console.error("❌ Error en obtenerSeguimiento:", error);
+        return res.status(500).json({ error: "Error interno del servidor." });
+    }
+};
+
+
+
+const procesarRespuestaCorreo = async (req, res) => {
+    try {
+        const { clave_rastreo, respuesta } = req.query;
+
+        if (!clave_rastreo || !respuesta) {
+            return res.status(400).send("Solicitud inválida.");
+        }
+
+        let nuevoEstado = null;
+
+        if (respuesta === "si") {
+            nuevoEstado = "en proceso";
+        } else if (respuesta === "no") {
+            nuevoEstado = "cancelado";
+        } else {
+            return res.status(400).send("Respuesta no válida.");
+        }
+
+        const actualizado = await actualizarEstadoEnBD(clave_rastreo, nuevoEstado);
+
+        if (actualizado) {
+            return res.send(`✅ La solicitud con clave ${clave_rastreo} ha sido actualizada a: ${nuevoEstado}.`);
+        } else {
+            return res.status(404).send("❌ No se encontró la solicitud.");
+        }
+    } catch (error) {
+        console.error("❌ Error procesando respuesta del correo:", error);
+        return res.status(500).send("Error interno del servidor.");
+    }
+};
+
+const actualizarEstado = async (req, res) => {
+    try {
+        const { clave_rastreo } = req.params;
+
+        if (!clave_rastreo) {
+            return res.status(400).json({ error: "La clave de rastreo es obligatoria." });
+        }
+
+        const resultado = await cambiarEstadoSolicitud(clave_rastreo);
+
+        if (resultado.exito) {
+            return res.status(200).json({ mensaje: "Estado actualizado correctamente.", nuevoEstado: resultado.nuevoEstado });
+        } else {
+            return res.status(400).json({ error: resultado.mensaje });
+        }
+    } catch (error) {
+        console.error("❌ Error en actualizarEstado:", error);
+        return res.status(500).json({ error: "Error interno del servidor." });
+    }
+};
+
+const cancelar = async (req, res) => {
+    try {
+        const { clave_rastreo } = req.params;
+
+        if (!clave_rastreo) {
+            return res.status(400).json({ error: "La clave de rastreo es obligatoria." });
+        }
+
+        const resultado = await cancelarSolicitud(clave_rastreo);
+
+        if (resultado) {
+            return res.status(200).json({ mensaje: "Solicitud cancelada correctamente." });
+        } else {
+            return res.status(400).json({ error: "No se pudo cancelar la solicitud." });
+        }
+    } catch (error) {
+        console.error("❌ Error en cancelar:", error);
+        return res.status(500).json({ error: "Error interno del servidor." });
+    }
+};
+
+module.exports = { crearNuevaSolicitud, obtenerSeguimiento, procesarRespuestaCorreo, actualizarEstado, cancelar };
+
+>>>>>>> Stashed changes
