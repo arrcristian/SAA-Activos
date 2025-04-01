@@ -4,6 +4,7 @@ const router = express.Router();
 
 router.post('/crear', crearNuevaSolicitud);
 
+
 const { crearNuevaSolicitud, obtenerSeguimiento, procesarRespuestaCorreo, actualizarEstado, cancelar } = require('../controllers/solicitudController');
 const router = express.Router();
 
