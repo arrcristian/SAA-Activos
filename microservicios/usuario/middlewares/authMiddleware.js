@@ -19,6 +19,6 @@ function verificarToken(req, res, next) {
         return res.status(401).json({ message: "Token inválido." });
 
     }   
-    
+}
 
 module.exports = verificarToken;

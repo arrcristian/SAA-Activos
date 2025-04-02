@@ -95,6 +95,7 @@ const actualizarEstadoEnBD = async (clave_rastreo, nuevoEstado) => {
 };
 
 const obtenerHistorialDeSolicitud = async (clave_rastreo) => {
+    const connection = await pool.getConnection();
     try {
         const [rows] = await pool.query(`
             SELECT estado, fecha_cambio
