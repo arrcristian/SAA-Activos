@@ -9,4 +9,5 @@ router.get('/respuesta', procesarRespuestaCorreo);
 router.get('/seguimiento/:clave_rastreo', obtenerSeguimiento);
 router.get('/obtener', obtenerSolicitudes);
 
+
 module.exports = router;

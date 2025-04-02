@@ -5,12 +5,12 @@ require('dotenv').config();
 const cors = require('cors');
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 4005;
 
 // Middlewares
 app.use(cors()); // Permitir solicitudes de diferentes dominios
+app.use(express.json()); // Permitir recibir JSON en las peticiones
 
-app.use(express.json());
 app.use('/api/solicitudes', solicitudRoutes);
 
 app.listen(PORT, () => {

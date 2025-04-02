@@ -20,17 +20,22 @@ class UsuarioRepository {
         let connection;
         try {
             connection = await pool.getConnection();
-            const [rows] = await connection.execute('SELECT * FROM usuarios WHERE usuario = ?', [usuario]);
+            const [rows] = await connection.execute(
+                `SELECT staff_id AS id, username AS usuario, email AS correo, passwd AS contrasena
+                 FROM ost_staff WHERE username = ?`, 
+                [usuario]
+            );
             return rows.length > 0 ? rows[0] : null;
         } catch (error) {
-            console.error('Error al obtener usuario por nombre de usuario:', error);
+            console.error('Error al obtener usuario de osTicket:', error);
             throw error;
         } finally {
             if (connection) connection.release();
         }
     }
 
-    async obtenerUsuarioPorCorreo(correo) {
+
+    /*async obtenerUsuarioPorCorreo(correo) {
         let connection;
         try {
             connection = await pool.getConnection();
@@ -42,7 +47,7 @@ class UsuarioRepository {
         } finally {
             if (connection) connection.release();
         }
-    }
+    } 
 
     async obtenerUsuarioPorId(id) {
         let connection;
@@ -56,26 +61,7 @@ class UsuarioRepository {
         } finally {
             if (connection) connection.release();
         }
-    }
-
-    async crearUsuario(usuario, correo, nombre, contrasena, tipo) {
-        let connection;
-        try {
-            connection = await pool.getConnection();
-            const hashedPass = await bcrypt.hash(contrasena, 10);
-            const [result] = await connection.execute(
-                'INSERT INTO usuarios (usuario, correo, nombre, contrasena, tipo) VALUES (?, ?, ?, ?, ?)',
-                [usuario, correo, nombre, hashedPass, tipo]
-            );
-            return result.insertId;
-        } catch (error) {
-            console.error('Error al crear usuario:', error);
-            throw error;
-        } finally {
-            if (connection) connection.release();
-        }
-    }
-
+    } */
     async actualizarContrasena(id, nuevaContrasena) {
         let connection;
         try {
@@ -91,21 +77,7 @@ class UsuarioRepository {
         }
     }
 
-    async eliminarUsuario(id) {
-        let connection;
-        try {
-            connection = await pool.getConnection();
-            await connection.execute('DELETE FROM usuarios WHERE id = ?', [id]);
-            return true;
-        } catch (error) {
-            console.error('Error al eliminar usuario:', error);
-            throw error;
-        } finally {
-            if (connection) connection.release();
-        }
-    }
-
-    async aumentarIntentoFallido(id) {
+    /*async aumentarIntentoFallido(id) {
         let connection;
         try {
             connection = await pool.getConnection();
@@ -119,9 +91,9 @@ class UsuarioRepository {
         } finally {
             if (connection) connection.release();
         }
-    }
+    }*/
 
-    async bloquearUsuario(id) {
+    /*async bloquearUsuario(id) {
         let connection;
         try {
             connection = await pool.getConnection();
@@ -136,9 +108,9 @@ class UsuarioRepository {
         } finally {
             if (connection) connection.release();
         }
-    }
+    } */
 
-    async resetearIntentosFallidos(id) {
+    /*async resetearIntentosFallidos(id) {
         let connection;
         try {
             connection = await pool.getConnection();
@@ -149,7 +121,7 @@ class UsuarioRepository {
         } finally {
             if (connection) connection.release();
         }
-    }
+    } */
 }
 
 module.exports = new UsuarioRepository();

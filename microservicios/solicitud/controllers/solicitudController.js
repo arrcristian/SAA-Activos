@@ -194,3 +194,4 @@ const cancelar = async (req, res) => {
 module.exports = { crearNuevaSolicitud, obtenerSolicitudes, obtenerSeguimiento, procesarRespuestaCorreo, actualizarEstado, cancelar };
 
 
+

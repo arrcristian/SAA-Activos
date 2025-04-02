@@ -1,14 +1,18 @@
 CREATE DATABASE IF NOT EXISTS solicitudes_db;
 USE solicitudes_db;
 
-CREATE TABLE IF NOT EXISTS solicitudes (
-    tracking_id VARCHAR(20) PRIMARY KEY,
+CREATE TABLE solicitudes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    clave_rastreo VARCHAR(50) UNIQUE NOT NULL,
     ticket_id INT NOT NULL,
     usuario VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
-    resolutor VARCHAR(100) NOT NULL,
-    estado ENUM('pendiente', 'en proceso', 'completado') DEFAULT 'pendiente',
-    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    resolutor VARCHAR(100),
+    topico VARCHAR(100) NOT NULL,
+    departamento VARCHAR(100) NOT NULL,
+    fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    estado VARCHAR(20) NOT NULL DEFAULT 'pendiente',
+    fecha_actualizacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS historial_estados (
@@ -27,3 +31,16 @@ CREATE TABLE contactos (
     email VARCHAR(100) NOT NULL UNIQUE,
     departamento VARCHAR(100) NOT NULL
 );
+
+DELIMITER //
+CREATE TRIGGER before_update_estado
+BEFORE UPDATE ON solicitudes
+FOR EACH ROW
+BEGIN
+    IF OLD.estado <> NEW.estado THEN
+        INSERT INTO historial_estados (tracking_id, estado, fecha_cambio)
+        VALUES (OLD.tracking_id, NEW.estado, NOW());
+    END IF;
+END;
+//
+DELIMITER ;
