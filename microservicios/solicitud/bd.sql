@@ -10,3 +10,20 @@ CREATE TABLE IF NOT EXISTS solicitudes (
     estado ENUM('pendiente', 'en proceso', 'completado') DEFAULT 'pendiente',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS historial_estados (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    clave_rastreo VARCHAR(50) NOT NULL,
+    estado ENUM('pendiente', 'en proceso', 'finalizado') NOT NULL,
+    fecha_cambio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (clave_rastreo) REFERENCES solicitudes(clave_rastreo) ON DELETE CASCADE
+);
+
+
+CREATE TABLE contactos (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    puesto VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    departamento VARCHAR(100) NOT NULL
+);
