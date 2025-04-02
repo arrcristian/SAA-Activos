@@ -3,6 +3,10 @@ const cors = require('cors');
 require('dotenv').config();
 const usuarioRoutes = require('./microservicios/usuario/routes/UsuarioRoutes');
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+const solicitudesRoutes = require('./microservicios/solicitud/routes/solicitudRoutes');
+>>>>>>> Stashed changes
 =======
 const solicitudesRoutes = require('./microservicios/solicitud/routes/solicitudRoutes');
 >>>>>>> Stashed changes

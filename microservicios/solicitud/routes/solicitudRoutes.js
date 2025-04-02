@@ -4,6 +4,9 @@ const { crearNuevaSolicitud, procesarRespuestaCorreo, actualizarEstado, cancelar
 =======
 const express = require('express')
 const { crearNuevaSolicitud, obtenerSeguimiento, obtenerSolicitudes, procesarRespuestaCorreo, actualizarEstado, cancelar } = require('../controllers/solicitudController');
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 const router = express.Router();
 
@@ -15,6 +18,9 @@ router.get('/respuesta', procesarRespuestaCorreo);
 =======
 router.get('/seguimiento/:clave_rastreo', obtenerSeguimiento);
 router.get('/obtener', obtenerSolicitudes);
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 module.exports = router;

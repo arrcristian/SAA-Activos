@@ -29,4 +29,7 @@ CREATE TABLE contactos (
     email VARCHAR(100) NOT NULL UNIQUE,
     departamento VARCHAR(100) NOT NULL
 );
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes

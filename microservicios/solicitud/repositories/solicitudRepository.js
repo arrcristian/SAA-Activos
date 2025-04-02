@@ -24,7 +24,10 @@ const crearSolicitud = async ({ tracking_id, ticket_id, usuario, email, resoluto
 };
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
 const obtenerTodasLasSolicitudes = async () => {
     try {
         const [rows] = await pool.query(

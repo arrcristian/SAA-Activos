@@ -6,7 +6,10 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 4000;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
 
 // Middlewares
 app.use(cors()); // Permitir solicitudes de diferentes dominios

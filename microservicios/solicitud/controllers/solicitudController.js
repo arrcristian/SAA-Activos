@@ -2,8 +2,11 @@ const Solicitud = require('../models/solicitudModel');
 const { crearSolicitud, actualizarEstadoEnBD } = require('../repositories/solicitudRepository');
 const { obtenerCorreoSupervisor } = require('../repositories/contactoRepository');
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 const sendEmail = require('../services/emailService'); // Importación corregida
 =======
+=======
+>>>>>>> Stashed changes
 const { crearSolicitud, obtenerTodasLasSolicitudes, actualizarEstadoEnBD, obtenerSolicitudPorClave, obtenerHistorialDeSolicitud, cancelarSolicitudEnBD } = require('../repositories/solicitudRepository');
 const sendEmail = require('../services/emailService');
 >>>>>>> Stashed changes
@@ -79,7 +82,10 @@ const crearNuevaSolicitud = async (req, res) => {
 };
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
 const obtenerSolicitudes = async (req, res) => {
     try {
         const solicitudes = await obtenerTodasLasSolicitudes();
