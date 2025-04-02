@@ -1,15 +1,7 @@
 const Solicitud = require('../models/solicitudModel');
-const { crearSolicitud, actualizarEstadoEnBD } = require('../repositories/solicitudRepository');
 const { obtenerCorreoSupervisor } = require('../repositories/contactoRepository');
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-const sendEmail = require('../services/emailService'); // Importación corregida
-=======
-=======
->>>>>>> Stashed changes
 const { crearSolicitud, obtenerTodasLasSolicitudes, actualizarEstadoEnBD, obtenerSolicitudPorClave, obtenerHistorialDeSolicitud, cancelarSolicitudEnBD } = require('../repositories/solicitudRepository');
 const sendEmail = require('../services/emailService');
->>>>>>> Stashed changes
 const { cambiarEstadoSolicitud, cancelarSolicitud } = require('../services/solicitudService');
 const crypto = require('crypto');
 
@@ -81,11 +73,6 @@ const crearNuevaSolicitud = async (req, res) => {
     }
 };
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> Stashed changes
 const obtenerSolicitudes = async (req, res) => {
     try {
         const solicitudes = await obtenerTodasLasSolicitudes();
@@ -131,10 +118,6 @@ const obtenerSeguimiento = async (req, res) => {
     }
 };
 
-
-
-
->>>>>>> Stashed changes
 const procesarRespuestaCorreo = async (req, res) => {
     try {
         const { clave_rastreo, respuesta } = req.query;
@@ -208,11 +191,6 @@ const cancelar = async (req, res) => {
     }
 };
 
-<<<<<<< Updated upstream
-module.exports = { crearNuevaSolicitud, procesarRespuestaCorreo, actualizarEstado, cancelar };
-=======
-
 module.exports = { crearNuevaSolicitud, obtenerSolicitudes, obtenerSeguimiento, procesarRespuestaCorreo, actualizarEstado, cancelar };
 
->>>>>>> Stashed changes
 

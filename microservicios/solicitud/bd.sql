@@ -10,8 +10,6 @@ CREATE TABLE IF NOT EXISTS solicitudes (
     estado ENUM('pendiente', 'en proceso', 'completado') DEFAULT 'pendiente',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-<<<<<<< Updated upstream
-=======
 
 CREATE TABLE IF NOT EXISTS historial_estados (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -29,7 +27,3 @@ CREATE TABLE contactos (
     email VARCHAR(100) NOT NULL UNIQUE,
     departamento VARCHAR(100) NOT NULL
 );
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
