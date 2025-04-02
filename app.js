@@ -5,7 +5,7 @@ const usuarioRoutes = require('./microservicios/usuario/routes/UsuarioRoutes');
 const solicitudesRoutes = require('./microservicios/solicitud/routes/SolicitudRoutes');
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 4005;
 
 // Middlewares
 app.use(cors());

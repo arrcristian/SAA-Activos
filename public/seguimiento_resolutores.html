@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalles de Solicitud</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            margin: 0;
+        }
+
+        .details-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        p {
+            font-size: 16px;
+            margin: 5px 0;
+            text-align: left;
+        }
+
+        .buttons-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f8f8f8;
+        }
+    </style>
+</head>
+<body>
+    <div class="details-container">
+        <h2>Detalles de la Solicitud</h2>
+        <p><strong>Clave de Rastreo:</strong> <span id="clave_rastreo"></span></p>
+        <p><strong>Usuario:</strong> <span id="usuario"></span></p>
+        <p><strong>Resolutor:</strong> <span id="resolutor"></span></p>
+        <p><strong>Estado:</strong> <span id="estado"></span></p>
+        <h3>Historial</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Descripción</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody id="historial"></tbody>
+        </table>
+        <div class="buttons-container">
+            <button id="btnCambiarEstado" onclick="cambiarEstado()">Cambiar Estado</button>
+            <button id="btnCancelar" onclick="cancelarSolicitud()">Cancelar Solicitud</button>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const claveRastreo = urlParams.get('clave');
+        document.getElementById("clave_rastreo").textContent = claveRastreo;
+
+        async function cargarDetalles() {
+            try {
+                const response = await fetch(`http://localhost:4000/api/solicitudes/seguimiento/${claveRastreo}`);
+                const solicitud = await response.json();
+
+                if (!response.ok) throw new Error(solicitud.error || "Error al obtener la solicitud");
+
+                document.getElementById("usuario").textContent = solicitud.usuario;
+                document.getElementById("resolutor").textContent = solicitud.resolutor;
+                document.getElementById("estado").textContent = solicitud.estado_actual;
+
+                const historialContainer = document.getElementById("historial");
+                historialContainer.innerHTML = "";
+                solicitud.historial.forEach(entry => {
+                    const fechaFormateada = formatearFecha(entry.fecha_cambio);
+                    const row = document.createElement("tr");
+                    row.innerHTML = `<td>${entry.estado}</td><td>${fechaFormateada}</td>`;
+                    historialContainer.appendChild(row);
+                });
+            } catch (error) {
+                console.error("❌ Error al cargar detalles:", error);
+            }
+        }
+
+        function formatearFecha(fechaISO) {
+            if (!fechaISO) return 'Fecha no disponible';
+
+            const fecha = new Date(fechaISO);
+            const dia = String(fecha.getDate()).padStart(2, '0');
+            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+            const año = fecha.getFullYear();
+            const horas = String(fecha.getHours()).padStart(2, '0');
+            const minutos = String(fecha.getMinutes()).padStart(2, '0');
+
+            return `${dia}/${mes}/${año} | ${horas}:${minutos}`;
+        }
+
+        async function cambiarEstado() {
+            try {
+                const response = await fetch(`http://localhost:4000/api/solicitudes/cambiar-estado/${claveRastreo}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" }
+                });
+
+                if (!response.ok) throw new Error("Error al cambiar el estado");
+                alert("Estado actualizado correctamente");
+                cargarDetalles();
+            } catch (error) {
+                console.error("❌ Error al cambiar estado:", error);
+            }
+        }
+
+        async function cancelarSolicitud() {
+            try {
+                const response = await fetch(`http://localhost:4000/api/solicitudes/cancelar/${claveRastreo}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" }
+                });
+
+                if (!response.ok) throw new Error("Error al cancelar la solicitud");
+                alert("Solicitud cancelada correctamente");
+                cargarDetalles();
+            } catch (error) {
+                console.error("❌ Error al cancelar solicitud:", error);
+            }
+        }
+
+        cargarDetalles();
+    </script>
+</body>
+</html>

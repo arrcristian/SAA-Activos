@@ -75,7 +75,7 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:4005/api/solicitudes/seguimiento/${trackingId}`);
+                const response = await fetch(`http://localhost:4000/api/solicitudes/seguimiento/${trackingId}`);
                 const data = await response.json();
                 
                 if (response.ok) {

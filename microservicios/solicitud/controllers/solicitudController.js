@@ -1,6 +1,6 @@
 const Solicitud = require('../models/solicitudModel');
 const { obtenerCorreoSupervisor } = require('../repositories/contactoRepository');
-const { crearSolicitud, actualizarEstadoEnBD, obtenerSolicitudPorClave, obtenerHistorialDeSolicitud } = require('../repositories/solicitudRepository');
+const { crearSolicitud, obtenerTodasLasSolicitudes, actualizarEstadoEnBD, obtenerSolicitudPorClave, obtenerHistorialDeSolicitud, cancelarSolicitudEnBD } = require('../repositories/solicitudRepository');
 const sendEmail = require('../services/emailService');
 const { cambiarEstadoSolicitud, cancelarSolicitud } = require('../services/solicitudService');
 const crypto = require('crypto');
@@ -73,6 +73,21 @@ const crearNuevaSolicitud = async (req, res) => {
     }
 };
 
+const obtenerSolicitudes = async (req, res) => {
+    try {
+        const solicitudes = await obtenerTodasLasSolicitudes();
+
+        if (!solicitudes || solicitudes.length === 0) {
+            console.log("⚠️ No hay solicitudes registradas.");
+            return res.status(404).json({ error: "No hay solicitudes disponibles." });
+        }
+
+        return res.status(200).json(solicitudes);
+    } catch (error) {
+        console.error("❌ Error en obtenerSolicitudes:", error);
+        return res.status(500).json({ error: "Error interno del servidor." });
+    }
+};
 
 const obtenerSeguimiento = async (req, res) => {
     try {
@@ -103,9 +118,6 @@ const obtenerSeguimiento = async (req, res) => {
     }
 };
 
-
-
-
 const procesarRespuestaCorreo = async (req, res) => {
     try {
         const { clave_rastreo, respuesta } = req.query;
@@ -115,16 +127,16 @@ const procesarRespuestaCorreo = async (req, res) => {
         }
 
         let nuevoEstado = null;
-
+        let actualizado;
         if (respuesta === "si") {
             nuevoEstado = "en proceso";
+            actualizado = await actualizarEstadoEnBD(clave_rastreo, nuevoEstado);
         } else if (respuesta === "no") {
             nuevoEstado = "cancelado";
+            actualizado = await cancelarSolicitudEnBD(clave_rastreo);
         } else {
             return res.status(400).send("Respuesta no válida.");
         }
-
-        const actualizado = await actualizarEstadoEnBD(clave_rastreo, nuevoEstado);
 
         if (actualizado) {
             return res.send(`✅ La solicitud con clave ${clave_rastreo} ha sido actualizada a: ${nuevoEstado}.`);
@@ -179,7 +191,7 @@ const cancelar = async (req, res) => {
     }
 };
 
+module.exports = { crearNuevaSolicitud, obtenerSolicitudes, obtenerSeguimiento, procesarRespuestaCorreo, actualizarEstado, cancelar };
 
-module.exports = { crearNuevaSolicitud, obtenerSeguimiento, procesarRespuestaCorreo, actualizarEstado, cancelar };
 
 

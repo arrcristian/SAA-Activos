@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +11,9 @@
             margin: 0;
             padding: 0;
             background-color: #f4f4f4;
+            text-align: center;
         }
+
         nav {
             background: #333;
             color: white;
@@ -19,51 +22,138 @@
             justify-content: space-between;
             align-items: center;
         }
+
         nav h1 {
             margin: 0;
         }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        input[type="text"] {
+            width: 70%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            text-align: center;
+        }
+
         button {
             padding: 10px 15px;
-            background: red;
+            background: #007bff;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            transition: background 0.3s;
         }
+
         button:hover {
-            background: darkred;
+            background: #0056b3;
         }
-        .container {
-            padding: 20px;
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #007bff;
+            color: white;
+        }
+
+        td strong {
+            color: #007bff;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
         }
     </style>
 </head>
-<body>
 
+<body>
     <nav>
-        <h1>Tepeyac</h1>
-        <button id="logout">Cerrar Sesión</button>
+        <h1>Dashboard de Resolutores</h1>
     </nav>
 
     <div class="container">
-        <h2>Seguimiento de Solicitudes</h2>
-        <p>No hay solicitudes pendientes.</p>
+        <h2>Bienvenido, Resolutor</h2>
+
+        <!-- Barra de búsqueda -->
+        <input type="text" id="buscarClave" placeholder="Ingrese clave de rastreo">
+        <button onclick="buscarSolicitud()">Buscar</button>
+
+        <h2>Solicitudes asignadas</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Clave de Rastreo</th>
+                    <th>Usuario</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="solicitudesTabla">
+                <!-- Aquí se insertarán las solicitudes dinámicamente -->
+            </tbody>
+        </table>
     </div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const token = sessionStorage.getItem("token");
+        async function cargarSolicitudes() {
+            try {
+                const response = await fetch('http://localhost:4000/api/solicitudes/obtener');
+                const solicitudes = await response.json();
+                if (!response.ok) throw new Error(solicitudes.error || "Error al obtener las solicitudes");
+                
+                const tabla = document.getElementById('solicitudesTabla');
+                tabla.innerHTML = "";
 
-            if (!token) {
-                window.location.href = "login.html"; // Proteger la ruta
+                solicitudes.forEach(solicitud => {
+                    const fila = document.createElement('tr');
+                    fila.innerHTML = `
+                        <td><strong>${solicitud.clave_rastreo}</strong></td>
+                        <td>${solicitud.usuario}</td>
+                        <td>${solicitud.estado}</td>
+                        <td><button onclick="verDetalles('${solicitud.clave_rastreo}')">Detalles</button></td>
+                    `;
+                    tabla.appendChild(fila);
+                });
+            } catch (error) {
+                console.error("❌ Error al cargar solicitudes:", error);
             }
-        });
+        }
 
-        document.getElementById("logout").addEventListener("click", function () {
-            sessionStorage.removeItem("token");
-            window.location.href = "login.html";
-        });
+        function verDetalles(claveRastreo) {
+            window.location.href = `seguimiento_resolutores.html?clave=${claveRastreo}`;
+        }
+
+        function buscarSolicitud() {
+            const clave = document.getElementById("buscarClave").value.trim();
+            if (clave) {
+                verDetalles(clave);
+            } else {
+                alert("Ingrese una clave de rastreo válida.");
+            }
+        }
+
+        cargarSolicitudes();
     </script>
-
 </body>
+
 </html>
