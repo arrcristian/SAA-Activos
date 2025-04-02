@@ -5,6 +5,13 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+<<<<<<< Updated upstream
+=======
+
+// Middlewares
+app.use(cors()); // Permitir solicitudes de diferentes dominios
+app.use(express.json()); // Permitir recibir JSON en las peticiones
+>>>>>>> Stashed changes
 
 app.use(express.json());
 app.use('/api/solicitudes', solicitudRoutes);

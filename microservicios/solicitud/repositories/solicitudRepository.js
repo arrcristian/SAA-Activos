@@ -23,6 +23,21 @@ const crearSolicitud = async ({ tracking_id, ticket_id, usuario, email, resoluto
     }
 };
 
+<<<<<<< Updated upstream
+=======
+const obtenerTodasLasSolicitudes = async () => {
+    try {
+        const [rows] = await pool.query(
+            "SELECT clave_rastreo, usuario, resolutor, estado FROM solicitudes WHERE estado IN ('Pendiente', 'En Proceso', 'Cancelado')"
+        );
+        return rows;
+    } catch (error) {
+        console.error("❌ Error al obtener todas las solicitudes:", error);
+        throw error;
+    }
+};
+
+>>>>>>> Stashed changes
 const obtenerSolicitudPorClave = async (clave_rastreo) => {
     try {
         const [rows] = await pool.query("SELECT * FROM solicitudes WHERE clave_rastreo = ?", [clave_rastreo]);
@@ -63,4 +78,10 @@ const cancelarSolicitudEnBD = async (clave_rastreo) => {
     }
 };
 
+<<<<<<< Updated upstream
 module.exports = { crearSolicitud, obtenerSolicitudPorClave, actualizarEstadoEnBD, cancelarSolicitudEnBD };
+=======
+
+module.exports = { crearSolicitud, obtenerSolicitudPorClave, obtenerTodasLasSolicitudes, actualizarEstadoEnBD, cancelarSolicitudEnBD, obtenerHistorialDeSolicitud };
+
+>>>>>>> Stashed changes

@@ -1,7 +1,12 @@
 const Solicitud = require('../models/solicitudModel');
 const { crearSolicitud, actualizarEstadoEnBD } = require('../repositories/solicitudRepository');
 const { obtenerCorreoSupervisor } = require('../repositories/contactoRepository');
+<<<<<<< Updated upstream
 const sendEmail = require('../services/emailService'); // Importación corregida
+=======
+const { crearSolicitud, obtenerTodasLasSolicitudes, actualizarEstadoEnBD, obtenerSolicitudPorClave, obtenerHistorialDeSolicitud, cancelarSolicitudEnBD } = require('../repositories/solicitudRepository');
+const sendEmail = require('../services/emailService');
+>>>>>>> Stashed changes
 const { cambiarEstadoSolicitud, cancelarSolicitud } = require('../services/solicitudService');
 const crypto = require('crypto');
 
@@ -73,6 +78,57 @@ const crearNuevaSolicitud = async (req, res) => {
     }
 };
 
+<<<<<<< Updated upstream
+=======
+const obtenerSolicitudes = async (req, res) => {
+    try {
+        const solicitudes = await obtenerTodasLasSolicitudes();
+
+        if (!solicitudes || solicitudes.length === 0) {
+            console.log("⚠️ No hay solicitudes registradas.");
+            return res.status(404).json({ error: "No hay solicitudes disponibles." });
+        }
+
+        return res.status(200).json(solicitudes);
+    } catch (error) {
+        console.error("❌ Error en obtenerSolicitudes:", error);
+        return res.status(500).json({ error: "Error interno del servidor." });
+    }
+};
+
+const obtenerSeguimiento = async (req, res) => {
+    try {
+        const { clave_rastreo } = req.params;
+
+        if (!clave_rastreo) {
+            return res.status(400).json({ error: "La clave de rastreo es obligatoria." });
+        }
+
+        const solicitud = await obtenerSolicitudPorClave(clave_rastreo);
+        if (!solicitud) {
+            console.log("⚠️ No se encontró ninguna solicitud con esa clave.");
+            return res.status(404).json({ error: "Solicitud no encontrada." });
+        }
+
+        const historial = await obtenerHistorialDeSolicitud(clave_rastreo);
+
+        return res.status(200).json({
+            ticket_id: solicitud.ticket_id,
+            usuario: solicitud.usuario,
+            resolutor: solicitud.resolutor,
+            estado_actual: solicitud.estado,
+            historial
+        });
+    } catch (error) {
+        console.error("❌ Error en obtenerSeguimiento:", error);
+        return res.status(500).json({ error: "Error interno del servidor." });
+    }
+};
+
+
+
+
+>>>>>>> Stashed changes
 const procesarRespuestaCorreo = async (req, res) => {
     try {
         const { clave_rastreo, respuesta } = req.query;
@@ -82,16 +138,16 @@ const procesarRespuestaCorreo = async (req, res) => {
         }
 
         let nuevoEstado = null;
-
+        let actualizado;
         if (respuesta === "si") {
             nuevoEstado = "en proceso";
+            actualizado = await actualizarEstadoEnBD(clave_rastreo, nuevoEstado);
         } else if (respuesta === "no") {
             nuevoEstado = "cancelado";
+            actualizado = await cancelarSolicitudEnBD(clave_rastreo);
         } else {
             return res.status(400).send("Respuesta no válida.");
         }
-
-        const actualizado = await actualizarEstadoEnBD(clave_rastreo, nuevoEstado);
 
         if (actualizado) {
             return res.send(`✅ La solicitud con clave ${clave_rastreo} ha sido actualizada a: ${nuevoEstado}.`);
@@ -146,5 +202,11 @@ const cancelar = async (req, res) => {
     }
 };
 
+<<<<<<< Updated upstream
 module.exports = { crearNuevaSolicitud, procesarRespuestaCorreo, actualizarEstado, cancelar };
+=======
+
+module.exports = { crearNuevaSolicitud, obtenerSolicitudes, obtenerSeguimiento, procesarRespuestaCorreo, actualizarEstado, cancelar };
+
+>>>>>>> Stashed changes
 
