@@ -51,6 +51,7 @@ button {
     cursor: pointer;
     font-size: 16px;
     transition: background 0.3s ease;
+    margin-top: 15px;
 }
 
 button:hover {
@@ -80,6 +81,7 @@ button:hover {
     </style>
 </head>
 <body>
+    
 
     <div class="login-container">
         <h2>Iniciar Sesión</h2>
@@ -89,7 +91,6 @@ button:hover {
             <button type="submit">Iniciar Sesión</button>
         </form>
         <p id="mensaje" class="error"></p>
-        <p><a href="recuperar.html">¿Olvidaste tu contraseña?</a></p>
     </div>
 
     <script>
@@ -131,6 +132,7 @@ button:hover {
 
                 // Guardar el token en sessionStorage
                 sessionStorage.setItem("token", data.token);
+                sessionStorage.setItem("usuario", data.usuario);
 
                 alert("Inicio de sesión exitoso");
 

@@ -27,6 +27,20 @@
             margin: 0;
         }
 
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #a71d2a;
+        }
+
         .container {
             max-width: 800px;
             margin: 20px auto;
@@ -65,7 +79,8 @@
             margin-top: 20px;
         }
 
-        th, td {
+        th,
+        td {
             padding: 10px;
             text-align: left;
             border-bottom: 1px solid #ddd;
@@ -89,10 +104,11 @@
 <body>
     <nav>
         <h1>Dashboard de Resolutores</h1>
+        <button class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</button>
     </nav>
 
     <div class="container">
-        <h2>Bienvenido, Resolutor</h2>
+        <h2 id="bienvenida">Bienvenido,</h2>
 
         <!-- Barra de búsqueda -->
         <input type="text" id="buscarClave" placeholder="Ingrese clave de rastreo">
@@ -115,12 +131,22 @@
     </div>
 
     <script>
+        function obtenerNombreUsuario() {
+            const usuario = sessionStorage.getItem("usuario");
+
+            if (usuario && usuario.trim() !== "") {
+                document.getElementById("bienvenida").textContent = `Bienvenido, ${usuario}`;
+            } else {
+                document.getElementById("bienvenida").textContent = "Bienvenido, Resolutor";
+            }
+        }
+
         async function cargarSolicitudes() {
             try {
                 const response = await fetch('http://localhost:4000/api/solicitudes/obtener');
                 const solicitudes = await response.json();
                 if (!response.ok) throw new Error(solicitudes.error || "Error al obtener las solicitudes");
-                
+
                 const tabla = document.getElementById('solicitudesTabla');
                 tabla.innerHTML = "";
 
@@ -152,6 +178,13 @@
             }
         }
 
+        function cerrarSesion() {
+            sessionStorage.removeItem("usuario");
+            sessionStorage.removeItem("token");
+            window.location.href = "login.html"; // Redirige a la página de inicio de sesión
+        }
+
+        obtenerNombreUsuario();
         cargarSolicitudes();
     </script>
 </body>

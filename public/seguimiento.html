@@ -51,6 +51,7 @@
             cursor: pointer;
             font-size: 16px;
             transition: background 0.3s ease;
+            margin-top: 15px;
         }
 
         button:hover {
@@ -81,7 +82,7 @@
                 if (response.ok) {
                     // Redirigir a la página de detalles
                     localStorage.setItem('seguimientoData', JSON.stringify(data));
-                    window.location.href = 'seguimiento_detalles.html';
+                    window.location.href = `seguimiento_detalles.html?clave=${trackingId}`;
                 } else {
                     alert(data.error);
                 }
