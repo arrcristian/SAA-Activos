@@ -1,6 +1,8 @@
-const { obtenerSolicitudPorClave, actualizarEstadoEnBD, cancelarSolicitudEnBD } = require('../repositories/solicitudRepository');
+const { obtenerSolicitudPorClave, actualizarEstadoEnBD, cancelarSolicitudEnBD, obtenerEtapasPorEquipo } = require('../repositories/solicitudRepository');
 
-const ESTADOS = ["pendiente", "en proceso", "finalizado"];
+const encontrarEstadoMasCercano = (estado, etapas) => {
+    return etapas.find(etapa => etapa.includes(estado)) || null;
+};
 
 const cambiarEstadoSolicitud = async (clave_rastreo) => {
     const solicitud = await obtenerSolicitudPorClave(clave_rastreo);
@@ -9,21 +11,43 @@ const cambiarEstadoSolicitud = async (clave_rastreo) => {
         return { exito: false, mensaje: "Solicitud no encontrada." };
     }
 
-    const estadoActual = solicitud.estado.toLowerCase();
-    const indiceActual = ESTADOS.indexOf(estadoActual);
-
-    if (indiceActual === -1 || indiceActual >= ESTADOS.length - 1) {
-        return { exito: false, mensaje: "No es posible cambiar el estado." };
+    const { id_etapa, id_equipo } = solicitud;
+    if (!id_equipo) {
+        return { exito: false, mensaje: "No se ha asignado un equipo a esta solicitud." };
     }
 
-    const nuevoEstado = ESTADOS[indiceActual + 1];
+    const etapas = await obtenerEtapasPorEquipo(id_equipo); // ahora devuelve [{ id_etapa, nombre_etapa }, ...]
 
-    const actualizado = await actualizarEstadoEnBD(clave_rastreo, nuevoEstado);
-    
-    return actualizado 
-        ? { exito: true, nuevoEstado } 
-        : { exito: false, mensaje: "Error al actualizar el estado." };
+    if (!etapas || etapas.length === 0) {
+        return { exito: false, mensaje: "No se encontraron etapas para el equipo asociado." };
+    }
+
+    const indiceActual = etapas.findIndex(e => e.id_etapa === id_etapa);
+    if (indiceActual === -1) {
+        return { exito: false, mensaje: "La etapa actual no se encuentra en el flujo de etapas del equipo." };
+    }
+
+    if (indiceActual >= etapas.length - 1) {
+        return { exito: false, mensaje: "La solicitud ya se encuentra en la última etapa." };
+    }
+
+    const siguienteEtapa = etapas[indiceActual + 1];
+    const actualizado = await actualizarEstadoEnBD(clave_rastreo, siguienteEtapa.id_etapa);
+
+    return actualizado
+        ? {
+            exito: true,
+            mensaje: `Etapa actualizada a "${siguienteEtapa.nombre_etapa}".`,
+            nuevaEtapa: siguienteEtapa
+        }
+        : {
+            exito: false,
+            mensaje: "Error al actualizar la etapa."
+        };
 };
+
+
+
 
 const cancelarSolicitud = async (clave_rastreo) => {
     const solicitud = await obtenerSolicitudPorClave(clave_rastreo);

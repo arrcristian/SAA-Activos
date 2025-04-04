@@ -94,16 +94,23 @@
                 document.getElementById("ticket_id").textContent = claveRastreo;
                 document.getElementById("usuario").textContent = data.usuario;
                 document.getElementById("resolutor").textContent = data.resolutor;
-                document.getElementById("estado_actual").textContent = data.estado_actual;
+                
+                const historial = data.historial;
+                if (historial && historial.length > 0) {
+                    const ultimaEtapa = historial[historial.length - 1];
+                    document.getElementById("estado_actual").textContent = ultimaEtapa.nombre_etapa || "Sin estado";
+                } else {
+                    document.getElementById("estado_actual").textContent = "Sin historial";
+                }
     
                 // Llenar historial
                 const historialContainer = document.getElementById("historial");
                 historialContainer.innerHTML = ""; // Limpiar contenido anterior
-    
+                console.log("Historial recibido:", data.historial);
                 data.historial.forEach(actualizacion => {
                     const fechaFormateada = formatearFecha(actualizacion.fecha_cambio);
                     const row = document.createElement("tr");
-                    row.innerHTML = `<td>${actualizacion.estado}</td><td>${fechaFormateada}</td>`;
+                    row.innerHTML = `<td>${actualizacion.nombre_etapa}</td><td>${fechaFormateada}</td>`;
                     historialContainer.appendChild(row);
                 });
     

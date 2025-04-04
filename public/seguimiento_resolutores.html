@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -63,7 +64,8 @@
             margin-top: 15px;
         }
 
-        th, td {
+        th,
+        td {
             border: 1px solid #ddd;
             padding: 8px;
             text-align: left;
@@ -74,6 +76,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="details-container">
         <h2>Detalles de la Solicitud</h2>
@@ -111,14 +114,21 @@
 
                 document.getElementById("usuario").textContent = solicitud.usuario;
                 document.getElementById("resolutor").textContent = solicitud.resolutor;
-                document.getElementById("estado").textContent = solicitud.estado_actual;
+
+                const historial = solicitud.historial;
+                if (historial && historial.length > 0) {
+                    const ultimaEtapa = historial[historial.length - 1];
+                    document.getElementById("estado").textContent = ultimaEtapa.nombre_etapa || "Sin estado";
+                } else {
+                    document.getElementById("estado").textContent = "Sin historial";
+                }
 
                 const historialContainer = document.getElementById("historial");
                 historialContainer.innerHTML = "";
                 solicitud.historial.forEach(entry => {
                     const fechaFormateada = formatearFecha(entry.fecha_cambio);
                     const row = document.createElement("tr");
-                    row.innerHTML = `<td>${entry.estado}</td><td>${fechaFormateada}</td>`;
+                    row.innerHTML = `<td>${entry.nombre_etapa}</td><td>${fechaFormateada}</td>`;
                     historialContainer.appendChild(row);
                 });
             } catch (error) {
@@ -140,19 +150,27 @@
         }
 
         async function cambiarEstado() {
-            try {
-                const response = await fetch(`http://localhost:4000/api/solicitudes/cambiar-estado/${claveRastreo}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" }
-                });
+    try {
+        const response = await fetch(`http://localhost:4000/api/solicitudes/cambiar-estado/${claveRastreo}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+        });
 
-                if (!response.ok) throw new Error("Error al cambiar el estado");
-                alert("Estado actualizado correctamente");
-                cargarDetalles();
-            } catch (error) {
-                console.error("❌ Error al cambiar estado:", error);
-            }
+        const data = await response.json(); // 👈 leer siempre la respuesta
+
+        if (!response.ok) {
+            // Mostrar el mensaje de error devuelto por el backend
+            alert(data.error || "Error al cambiar el estado");
+            return;
         }
+
+        alert("Estado actualizado correctamente");
+        cargarDetalles();
+    } catch (error) {
+        console.error("❌ Error al cambiar estado:", error);
+        alert("Ocurrió un error al cambiar el estado");
+    }
+}
 
         async function cancelarSolicitud() {
             try {
@@ -172,4 +190,5 @@
         cargarDetalles();
     </script>
 </body>
+
 </html>

@@ -10,15 +10,15 @@ const generarTrackingId = () => crypto.randomBytes(6).toString('hex').toUpperCas
 
 const crearNuevaSolicitud = async (req, res) => {
     try {
-        const { ticket_id, numero_ticket, usuario, email, resolutor, topico, departamento } = req.body;
+        const { ticket_id, numero_ticket, usuario, email, resolutor, topico, departamento, equipo_id } = req.body;
 
-        if (!ticket_id || !numero_ticket || !usuario || !email || !resolutor || !topico || !departamento) {
+        if (!ticket_id || !numero_ticket || !usuario || !email || !resolutor || !topico || !departamento || !equipo_id) {
             return res.status(400).json({ error: "Faltan datos requeridos." });
         }
 
         // Generar tracking ID
         const tracking_id = generarTrackingId();
-        const nuevaSolicitud = new Solicitud(tracking_id, ticket_id, usuario, email, resolutor, topico, departamento);
+        const nuevaSolicitud = new Solicitud(tracking_id, ticket_id, usuario, email, resolutor, topico, departamento, equipo_id);
 
         // Guardar en la base de datos
         const guardado = await crearSolicitud(nuevaSolicitud);
@@ -47,6 +47,7 @@ const crearNuevaSolicitud = async (req, res) => {
         <p><strong>Clave de rastreo:</strong> ${tracking_id}</p>
         <p><strong>Usuario:</strong> ${usuario}</p>
         <p><strong>Departamento:</strong> ${departamento}</p>
+        <p><strong>Equipo ID:</strong> ${equipo_id}</p>
         <p>¿Deseas aprobar o cancelar la solicitud?</p>
         <p>
             <a href="${enlaceAprobar}" style="display:inline-block;padding:10px;background-color:green;color:white;text-decoration:none;border-radius:5px;">

@@ -10,17 +10,22 @@ CREATE TABLE solicitudes (
     resolutor VARCHAR(100),
     topico VARCHAR(100) NOT NULL,
     departamento VARCHAR(100) NOT NULL,
+    id_equipo INT NOT NULL,
+    id_etapa INT NOT NULL,
     fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    estado VARCHAR(20) NOT NULL DEFAULT 'pendiente',
-    fecha_actualizacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    fecha_actualizacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_equipo) REFERENCES equipos(id_equipo) ON DELETE CASCADE,
+    FOREIGN KEY (id_etapa) REFERENCES etapas(id_etapa) ON DELETE CASCADE
 );
+
 
 CREATE TABLE IF NOT EXISTS historial_estados (
     id INT AUTO_INCREMENT PRIMARY KEY,
     clave_rastreo VARCHAR(50) NOT NULL,
-    estado ENUM('pendiente', 'en proceso', 'finalizado') NOT NULL,
+    id_etapa INT NOT NULL,
     fecha_cambio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (clave_rastreo) REFERENCES solicitudes(clave_rastreo) ON DELETE CASCADE
+    FOREIGN KEY (clave_rastreo) REFERENCES solicitudes(clave_rastreo) ON DELETE CASCADE,
+    FOREIGN KEY (id_etapa) REFERENCES etapas(id_etapa) ON DELETE CASCADE
 );
 
 
@@ -32,15 +37,22 @@ CREATE TABLE contactos (
     departamento VARCHAR(100) NOT NULL
 );
 
-DELIMITER //
-CREATE TRIGGER before_update_estado
-BEFORE UPDATE ON solicitudes
-FOR EACH ROW
-BEGIN
-    IF OLD.estado <> NEW.estado THEN
-        INSERT INTO historial_estados (tracking_id, estado, fecha_cambio)
-        VALUES (OLD.tracking_id, NEW.estado, NOW());
-    END IF;
-END;
-//
-DELIMITER ;
+CREATE TABLE procesos (
+    id_proceso INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE equipos (
+    id_equipo INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    id_proceso INT NOT NULL,
+    FOREIGN KEY (id_proceso) REFERENCES procesos(id_proceso)
+);
+
+CREATE TABLE etapas (
+    id_etapa INT PRIMARY KEY AUTO_INCREMENT,
+    id_proceso INT NOT NULL,
+    nombre_etapa VARCHAR(100) NOT NULL,
+    orden INT NOT NULL,
+    FOREIGN KEY (id_proceso) REFERENCES procesos(id_proceso)
+);
