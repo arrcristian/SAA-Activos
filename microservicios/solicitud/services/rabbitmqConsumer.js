@@ -1,5 +1,7 @@
 const amqp = require('amqplib');
-const { crearSolicitud } = require('../repositories/solicitudRepository');
+const Solicitud = require('../models/solicitudModel');
+const { crearSolicitud, obtenerEquipos } = require('../repositories/solicitudRepository');
+const { obtenerCorreoSupervisor } = require('../repositories/contactoRepository');
 const sendEmail = require('./emailService');
 const crypto = require('crypto');
 
@@ -8,6 +10,11 @@ const QUEUE_NAME = 'ticket_queue';
 
 // Función para generar un Tracking ID único
 const generarTrackingId = () => crypto.randomBytes(6).toString('hex').toUpperCase();
+
+function extraerEquipoDesdeTexto(texto) {
+    const match = texto.match(/#(\w+)/); // Busca algo como #Impresora
+    return match ? match[1] : null; // Devuelve 'Impresora' si encontró algo
+}
 
 const iniciarConsumidor = async () => {
     try {
@@ -23,9 +30,9 @@ const iniciarConsumidor = async () => {
                     const evento = JSON.parse(msg.content.toString());
                     console.log("✅ Mensaje recibido:", evento);
 
-                    const { ticket_id, numero_ticket, usuario, email, resolutor, topico, departamento } = evento;
+                    const { ticket_id, numero_ticket, usuario, email, resolutor, topico, departamento, equipo_solicitado } = evento;
 
-                    if (!ticket_id || !numero_ticket || !usuario || !email || !resolutor || !topico || !departamento) {
+                    if (!ticket_id || !numero_ticket || !usuario || !email || !resolutor || !topico || !departamento || !equipo_solicitado) {
                         console.error("❌ Evento inválido, faltan datos requeridos.");
                         channel.nack(msg, false, false); // Rechaza el mensaje sin reintentar
                         return;
@@ -34,27 +41,68 @@ const iniciarConsumidor = async () => {
                     // Generar tracking ID
                     const tracking_id = generarTrackingId();
 
-                    // Guardar en la base de datos
-                    const nuevaSolicitud = {
-                        tracking_id,
-                        ticket_id,
-                        usuario,
-                        email,
-                        resolutor,
-                        topico,
-                        departamento,
-                        estado: 'Pendiente'
-                    };
+                    const equipo = extraerEquipoDesdeTexto(equipo_solicitado);
+
+                    const id = await obtenerEquipos(equipo);
+
+                    if (id == null) {
+                        console.error("❌ Evento inválido, no se identifa al equipo.");
+                        channel.nack(msg, false, false); // Rechaza el mensaje sin reintentar
+                        return;
+                    }
+
+                    const equipo_id = id.id_equipo;
+
+                    console.log(equipo_id);
+
+                    const nuevaSolicitud = new Solicitud(tracking_id, ticket_id, usuario, email, resolutor, topico, departamento, equipo_id);
 
                     const guardado = await crearSolicitud(nuevaSolicitud);
 
                     if (guardado) {
-                        // Enviar correo con la clave de rastreo
-                        const asunto = "Confirmación de solicitud";
-                        const mensaje = `Hola ${usuario},\n\nTu solicitud ha sido registrada exitosamente.\n\nClave de rastreo: ${tracking_id}\n\nGracias por usar nuestro servicio.`;
-                        await sendEmail(email, asunto, mensaje);
+                        const asuntoUsuario = "Confirmación de solicitud";
+                        const mensajeUsuario = `Hola ${usuario},\n\nTu solicitud ha sido registrada exitosamente.\n\nClave de rastreo: ${tracking_id}\n\nGracias por usar nuestro servicio.`;
+
+                        await sendEmail(email, asuntoUsuario, mensajeUsuario, false);
 
                         console.log(`📩 Correo enviado a ${email} con tracking ID: ${tracking_id}`);
+
+                        // Obtener correo del supervisor
+                        const supervisor = await obtenerCorreoSupervisor(departamento);
+
+                        console.log(supervisor);
+                        if (supervisor) {
+                            // Crear enlaces de aprobación y cancelación
+                            const enlaceAprobar = `${process.env.APP_URL}/api/solicitudes/respuesta?clave_rastreo=${tracking_id}&respuesta=si`;
+                            const enlaceRechazar = `${process.env.APP_URL}/api/solicitudes/respuesta?clave_rastreo=${tracking_id}&respuesta=no`;
+
+                            const asuntoSupervisor = "Nueva Solicitud Pendiente";
+                            const mensajeSupervisor = `
+    <html>
+    <body>
+        <p>Hola ${supervisor.nombre},</p>
+        <p>Se ha generado una nueva solicitud.</p>
+        <p><strong>Clave de rastreo:</strong> ${tracking_id}</p>
+        <p><strong>Usuario:</strong> ${usuario}</p>
+        <p><strong>Departamento:</strong> ${departamento}</p>
+        <p><strong>Equipo ID:</strong> ${equipo_id}</p>
+        <p>¿Deseas aprobar o cancelar la solicitud?</p>
+        <p>
+            <a href="${enlaceAprobar}" style="display:inline-block;padding:10px;background-color:green;color:white;text-decoration:none;border-radius:5px;">
+                ✅ Aprobar
+            </a> 
+            &nbsp;&nbsp;
+            <a href="${enlaceRechazar}" style="display:inline-block;padding:10px;background-color:red;color:white;text-decoration:none;border-radius:5px;">
+                ❌ Rechazar
+            </a>
+        </p>
+    </body>
+    </html>
+`;
+                            await sendEmail(supervisor.email, asuntoSupervisor, mensajeSupervisor, true);
+                        }
+
+                        console.log(`📩 Correo enviado a supervisor con correo ${supervisor.email} con tracking ID: ${tracking_id}`);
                         channel.ack(msg); // Confirma el mensaje
                     } else {
                         console.error("❌ No se pudo crear la solicitud.");

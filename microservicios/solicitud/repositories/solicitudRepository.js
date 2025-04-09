@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 
 const crearSolicitud = async ({ tracking_id, ticket_id, usuario, email, resolutor, topico, departamento, equipo_id }) => {
+ 
     const connection = await pool.getConnection();
     try {
         await connection.beginTransaction();
@@ -134,7 +135,6 @@ const obtenerEtapasPorEquipo = async (id_equipo) => {
     }
 };
 
-
 const obtenerHistorialDeSolicitud = async (clave_rastreo) => {
     const connection = await pool.getConnection();
     try {
@@ -171,6 +171,22 @@ const cancelarSolicitudEnBD = async (clave_rastreo) => {
     }
 };
 
-module.exports = { crearSolicitud, obtenerSolicitudPorClave, obtenerTodasLasSolicitudes, actualizarEstadoEnBD, cancelarSolicitudEnBD, obtenerHistorialDeSolicitud, obtenerEtapasPorEquipo };
+const obtenerEquipos = async (nombre_equipo) => {
+    try {
+        const query = `
+            SELECT e.id_equipo
+            FROM equipos e
+            WHERE e.nombre = ?
+        `;
+
+        const [rows] = await pool.query(query, [nombre_equipo]);
+        return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
+        console.error("❌ Error al obtener el equipo:", error);
+        throw error;
+    }
+};
+
+module.exports = { crearSolicitud, obtenerEquipos, obtenerSolicitudPorClave, obtenerTodasLasSolicitudes, actualizarEstadoEnBD, cancelarSolicitudEnBD, obtenerHistorialDeSolicitud, obtenerEtapasPorEquipo };
 
 

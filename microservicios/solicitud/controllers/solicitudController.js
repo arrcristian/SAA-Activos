@@ -130,17 +130,17 @@ const procesarRespuestaCorreo = async (req, res) => {
         let nuevoEstado = null;
         let actualizado;
         if (respuesta === "si") {
-            nuevoEstado = "en proceso";
-            actualizado = await actualizarEstadoEnBD(clave_rastreo, nuevoEstado);
+            actualizado = await cambiarEstadoSolicitud(clave_rastreo);
+            nuevoEstado="actualizada";
         } else if (respuesta === "no") {
-            nuevoEstado = "cancelado";
-            actualizado = await cancelarSolicitudEnBD(clave_rastreo);
+            actualizado = await cancelarSolicitud(clave_rastreo);
+            nuevoEstado="cancelada";
         } else {
             return res.status(400).send("Respuesta no válida.");
         }
 
-        if (actualizado) {
-            return res.send(`✅ La solicitud con clave ${clave_rastreo} ha sido actualizada a: ${nuevoEstado}.`);
+        if (actualizado.exito) {
+            return res.send(`✅ La solicitud con clave ${clave_rastreo} ha sido ${nuevoEstado}.`);
         } else {
             return res.status(404).send("❌ No se encontró la solicitud.");
         }

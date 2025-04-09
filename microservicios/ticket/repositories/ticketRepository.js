@@ -26,7 +26,16 @@ const obtenerTicketPorId = async (ticket_id) => {
             ue.address AS email,
             s.username AS resolutor,
             tp.topic AS topico,
-            d.name AS departamento
+            d.name AS departamento,
+            (
+                SELECT v.value
+                FROM ost_form_entry e
+                JOIN ost_form_entry_values v ON e.id = v.entry_id
+                WHERE e.object_type = 'T'
+                  AND e.object_id = t.ticket_id
+                  AND v.field_id = 20
+                LIMIT 1
+            ) AS equipo_solicitado
         FROM ost_ticket t
         JOIN ost_user u ON t.user_id = u.id
         JOIN ost_user_email ue ON u.default_email_id = ue.id
@@ -34,7 +43,7 @@ const obtenerTicketPorId = async (ticket_id) => {
         JOIN ost_help_topic tp ON t.topic_id = tp.topic_id
         JOIN ost_department d ON t.dept_id = d.id
         WHERE t.ticket_id = ?
-    `, [ticket_id]);
+    `, [ticket_id]);    
 
     console.log('Se pudo obtener el ticket');
     return rows.length > 0 ? rows[0] : null;
