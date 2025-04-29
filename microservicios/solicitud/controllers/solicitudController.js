@@ -111,6 +111,8 @@ const obtenerSeguimiento = async (req, res) => {
             usuario: solicitud.usuario,
             resolutor: solicitud.resolutor,
             estado_actual: solicitud.estado,
+            fecha_creacion: solicitud.fecha_creacion,
+            tipo_equipo: solicitud.tipo_equipo,
             historial
         });
     } catch (error) {

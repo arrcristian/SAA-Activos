@@ -128,6 +128,8 @@
                     <th>Usuario</th>
                     <th>Estado</th>
                     <th>Tipo de Equipo</th> <!-- Nueva columna -->
+                    <th>Fecha de Creación</th> <!-- NUEVA -->
+                    <th>Última Actualización</th> <!-- NUEVA -->
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -135,9 +137,15 @@
                 <!-- Aquí se insertarán las solicitudes dinámicamente -->
             </tbody>
         </table>
+        <div style="margin-top: 20px;">
+            <div id="infoRango" style="margin-bottom: 10px; font-weight: bold;"></div>
+            <div id="paginacion"></div>
+        </div>
     </div>
 
     <script>
+        const solicitudesPorPagina = 10;
+        let paginaActual = 1;
         let todasLasSolicitudes = []; // Para mantener todas las solicitudes en memoria
 
         function obtenerNombreUsuario() {
@@ -159,21 +167,89 @@
             }
         }
 
-        function mostrarSolicitudes(solicitudes) {
+        function mostrarSolicitudes(solicitudes, pagina = 1) {
             const tabla = document.getElementById('solicitudesTabla');
             tabla.innerHTML = "";
+
+            // Ordenar por fecha de última actualización ASC (más vieja primero)
+            solicitudes.sort((a, b) => new Date(a.fecha_actualizacion) - new Date(b.fecha_actualizacion));
+
+            // Paginación
+            const inicio = (pagina - 1) * solicitudesPorPagina;
+            const fin = inicio + solicitudesPorPagina;
+            const solicitudesPagina = solicitudes.slice(inicio, fin);
 
             solicitudes.forEach(solicitud => {
                 const fila = document.createElement('tr');
                 fila.innerHTML = `
-                    <td><strong>${solicitud.clave_rastreo}</strong></td>
-                    <td>${solicitud.usuario}</td>
-                    <td>${solicitud.estado}</td>
-                    <td>${solicitud.tipo_equipo || 'No especificado'}</td>
-                    <td><button onclick="verDetalles('${solicitud.clave_rastreo}')">Detalles</button></td>
-                `;
+            <td><strong>${solicitud.clave_rastreo}</strong></td>
+            <td>${solicitud.usuario}</td>
+            <td>${solicitud.estado}</td>
+            <td>${solicitud.tipo_equipo || 'No especificado'}</td>
+            <td>${formatearFecha(solicitud.fecha_creacion)}</td>
+            <td>${formatearFecha(solicitud.fecha_actualizacion)}</td>
+            <td><button onclick="verDetalles('${solicitud.clave_rastreo}')">Detalles</button></td>
+        `;
                 tabla.appendChild(fila);
             });
+
+            actualizarInfoRango(solicitudes.length, pagina);
+            generarControlesPaginacion(solicitudes.length, pagina);
+        }
+
+        function formatearFecha(fechaISO) {
+            if (!fechaISO) return "No disponible";
+            const fecha = new Date(fechaISO);
+            return fecha.toLocaleDateString("es-MX", {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function generarControlesPaginacion(totalSolicitudes, paginaActual) {
+            const contenedor = document.getElementById("paginacion");
+            contenedor.innerHTML = "";
+
+            const totalPaginas = Math.ceil(totalSolicitudes / solicitudesPorPagina);
+
+            if (totalPaginas <= 1) return; // No mostrar si solo hay una página
+
+            const crearBoton = (texto, pagina, deshabilitado = false) => {
+                const boton = document.createElement("button");
+                boton.textContent = texto;
+                boton.disabled = deshabilitado;
+                boton.onclick = () => mostrarSolicitudes(filtrarSolicitudesActuales(), pagina);
+                return boton;
+            };
+
+            contenedor.appendChild(crearBoton("Anterior", paginaActual - 1, paginaActual === 1));
+
+            for (let i = 1; i <= totalPaginas; i++) {
+                const btn = crearBoton(i, i);
+                if (i === paginaActual) {
+                    btn.style.fontWeight = "bold";
+                    btn.style.backgroundColor = "#007bff";
+                    btn.style.color = "white";
+                }
+                contenedor.appendChild(btn);
+            }
+
+            contenedor.appendChild(crearBoton("Siguiente", paginaActual + 1, paginaActual === totalPaginas));
+        }
+
+        function actualizarInfoRango(total, pagina) {
+            const inicio = (pagina - 1) * solicitudesPorPagina + 1;
+            const fin = Math.min(inicio + solicitudesPorPagina - 1, total);
+            const info = document.getElementById("infoRango");
+
+            if (total === 0) {
+                info.textContent = "No hay solicitudes para mostrar.";
+            } else {
+                info.textContent = `Mostrando solicitudes ${inicio}–${fin} de ${total}`;
+            }
         }
 
         async function cargarTiposEquipo() {
@@ -202,7 +278,15 @@
                 ? todasLasSolicitudes
                 : todasLasSolicitudes.filter(solicitud => solicitud.tipo_equipo === tipoSeleccionado);
 
-            mostrarSolicitudes(filtradas);
+            paginaActual = 1;
+            mostrarSolicitudes(filtradas, paginaActual);
+        }
+
+        function filtrarSolicitudesActuales() {
+            const tipoSeleccionado = document.getElementById("filtroEquipo").value;
+            return tipoSeleccionado === ""
+                ? todasLasSolicitudes
+                : todasLasSolicitudes.filter(s => s.tipo_equipo === tipoSeleccionado);
         }
 
         function verDetalles(claveRastreo) {

@@ -57,9 +57,11 @@
 <body>
     <div class="details-container">
         <h2>Detalles de la Solicitud</h2>
-        <p><strong>Ticket ID:</strong> <span id="ticket_id"></span></p>
+        <p><strong>Clave de Rastreo:</strong> <span id="ticket_id"></span></p>
         <p><strong>Usuario:</strong> <span id="usuario"></span></p>
         <p><strong>Resolutor:</strong> <span id="resolutor"></span></p>
+        <p><strong>Fecha de creación:</strong> <span id="fecha_creacion"></span></p>
+        <p><strong>Tipo de equipo:</strong> <span id="tipo_equipo"></span></p>
         <p><strong>Estado Actual:</strong> <span id="estado_actual"></span></p>
         <h3>Historial de Seguimiento</h3>
         <table>
@@ -94,6 +96,9 @@
                 document.getElementById("ticket_id").textContent = claveRastreo;
                 document.getElementById("usuario").textContent = data.usuario;
                 document.getElementById("resolutor").textContent = data.resolutor;
+                document.getElementById("fecha_creacion").textContent = formatearFecha(data.fecha_creacion);
+                document.getElementById("tipo_equipo").textContent = data.tipo_equipo || "No especificado";
+
                 
                 const historial = data.historial;
                 if (historial && historial.length > 0) {

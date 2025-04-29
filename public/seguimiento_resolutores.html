@@ -83,6 +83,8 @@
         <p><strong>Clave de Rastreo:</strong> <span id="clave_rastreo"></span></p>
         <p><strong>Usuario:</strong> <span id="usuario"></span></p>
         <p><strong>Resolutor:</strong> <span id="resolutor"></span></p>
+        <p><strong>Fecha de creación:</strong> <span id="fecha_creacion"></span></p>
+        <p><strong>Tipo de equipo:</strong> <span id="tipo_equipo"></span></p>
         <p><strong>Estado:</strong> <span id="estado"></span></p>
         <h3>Historial</h3>
         <table>
@@ -114,6 +116,8 @@
 
                 document.getElementById("usuario").textContent = solicitud.usuario;
                 document.getElementById("resolutor").textContent = solicitud.resolutor;
+                document.getElementById("fecha_creacion").textContent = formatearFecha(solicitud.fecha_creacion);
+                document.getElementById("tipo_equipo").textContent = solicitud.tipo_equipo || "No especificado";
 
                 const historial = solicitud.historial;
                 if (historial && historial.length > 0) {

@@ -12,8 +12,8 @@ const QUEUE_NAME = 'ticket_queue';
 const generarTrackingId = () => crypto.randomBytes(6).toString('hex').toUpperCase();
 
 function extraerEquipoDesdeTexto(texto) {
-    const match = texto.match(/#(\w+)/); // Busca algo como #Impresora
-    return match ? match[1] : null; // Devuelve 'Impresora' si encontró algo
+    const match = texto.match(/\{([^}]+)\}/); // Busca texto entre llaves { ... }
+    return match ? match[1].trim() : null; // Devuelve el contenido sin espacios extra si lo encontró
 }
 
 const iniciarConsumidor = async () => {

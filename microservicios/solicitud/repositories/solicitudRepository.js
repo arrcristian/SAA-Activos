@@ -1,7 +1,7 @@
 const pool = require('../config/db');
 
 const crearSolicitud = async ({ tracking_id, ticket_id, usuario, email, resolutor, topico, departamento, equipo_id }) => {
- 
+
     const connection = await pool.getConnection();
     try {
         await connection.beginTransaction();
@@ -66,6 +66,8 @@ const obtenerTodasLasSolicitudes = async () => {
                 s.clave_rastreo,
                 s.usuario,
                 s.resolutor,
+                s.fecha_creacion,
+                s.fecha_actualizacion,
                 et.nombre_etapa AS estado,
                 eq.nombre AS tipo_equipo
             FROM solicitudes s
@@ -81,7 +83,19 @@ const obtenerTodasLasSolicitudes = async () => {
 
 const obtenerSolicitudPorClave = async (clave_rastreo) => {
     try {
-        const [rows] = await pool.query("SELECT * FROM solicitudes WHERE clave_rastreo = ?", [clave_rastreo]);
+        const [rows] = await pool.query(`
+            SELECT 
+                s.clave_rastreo,
+                s.usuario,
+                s.resolutor,
+                s.fecha_creacion,
+                s.fecha_actualizacion,
+                et.nombre_etapa AS estado,
+                eq.nombre AS tipo_equipo
+            FROM solicitudes s
+            JOIN etapas et ON s.id_etapa = et.id_etapa
+            JOIN equipos eq ON s.id_equipo = eq.id_equipo
+         WHERE s.clave_rastreo = ?`, [clave_rastreo]);
         return rows.length > 0 ? rows[0] : null;
     } catch (error) {
         console.error("❌ Error al obtener solicitud:", error);
@@ -147,7 +161,7 @@ const obtenerHistorialDeSolicitud = async (clave_rastreo) => {
             WHERE h.clave_rastreo = ? 
             ORDER BY h.fecha_cambio ASC
         `, [clave_rastreo]);
-        
+
         return rows;
     } catch (error) {
         console.error("❌ Error al obtener historial de solicitud:", error);
