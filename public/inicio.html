@@ -179,7 +179,8 @@
             const fin = inicio + solicitudesPorPagina;
             const solicitudesPagina = solicitudes.slice(inicio, fin);
 
-            solicitudes.forEach(solicitud => {
+            
+            solicitudesPagina.forEach(solicitud => {
                 const fila = document.createElement('tr');
                 fila.innerHTML = `
             <td><strong>${solicitud.clave_rastreo}</strong></td>
