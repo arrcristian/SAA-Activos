@@ -1,4 +1,4 @@
-const { obtenerSolicitudPorClave, actualizarEstadoEnBD, cancelarSolicitudEnBD, obtenerEtapasPorEquipo } = require('../repositories/solicitudRepository');
+const { obtenerSolicitudPorClave, actualizarEstadoEnBD, cancelarSolicitudEnBD, obtenerEtapasPorEquipo} = require('../repositories/solicitudRepository');
 
 const encontrarEstadoMasCercano = (estado, etapas) => {
     return etapas.find(etapa => etapa.includes(estado)) || null;
@@ -91,4 +91,8 @@ const cancelarSolicitud = async (clave_rastreo) => {
         };
 };
 
-module.exports = { cambiarEstadoSolicitud, cancelarSolicitud };
+const obtenerTiposEquipo = async () => {
+    return await obtenerTiposEquipo();
+};
+
+module.exports = { cambiarEstadoSolicitud, cancelarSolicitud, obtenerTiposEquipo};

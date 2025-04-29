@@ -1,5 +1,5 @@
 const express = require('express')
-const { crearNuevaSolicitud, obtenerSeguimiento, obtenerSolicitudes, procesarRespuestaCorreo, actualizarEstado, cancelar } = require('../controllers/solicitudController');
+const { crearNuevaSolicitud, obtenerSeguimiento, obtenerSolicitudes, procesarRespuestaCorreo, actualizarEstado, cancelar, getTiposEquipo } = require('../controllers/solicitudController');
 const router = express.Router();
 
 router.post('/crear', crearNuevaSolicitud);
@@ -8,6 +8,7 @@ router.post('/cancelar/:clave_rastreo', cancelar);
 router.get('/respuesta', procesarRespuestaCorreo);
 router.get('/seguimiento/:clave_rastreo', obtenerSeguimiento);
 router.get('/obtener', obtenerSolicitudes);
+router.get('/tipos', getTiposEquipo);
 
 
 module.exports = router;

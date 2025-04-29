@@ -110,9 +110,15 @@
     <div class="container">
         <h2 id="bienvenida">Bienvenido,</h2>
 
-        <!-- Barra de búsqueda -->
+        <!-- Barra de búsqueda por clave -->
         <input type="text" id="buscarClave" placeholder="Ingrese clave de rastreo">
         <button onclick="buscarSolicitud()">Buscar</button>
+
+        <!-- Filtro por tipo de equipo -->
+        <select id="filtroEquipo" onchange="filtrarPorEquipo()">
+            <option value="">Todos los equipos</option>
+            <!-- Las opciones se llenarán dinámicamente -->
+        </select>
 
         <h2>Solicitudes asignadas</h2>
         <table>
@@ -121,6 +127,7 @@
                     <th>Clave de Rastreo</th>
                     <th>Usuario</th>
                     <th>Estado</th>
+                    <th>Tipo de Equipo</th> <!-- Nueva columna -->
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -131,14 +138,12 @@
     </div>
 
     <script>
+        let todasLasSolicitudes = []; // Para mantener todas las solicitudes en memoria
+
         function obtenerNombreUsuario() {
             const usuario = sessionStorage.getItem("usuario");
-
-            if (usuario && usuario.trim() !== "") {
-                document.getElementById("bienvenida").textContent = `Bienvenido, ${usuario}`;
-            } else {
-                document.getElementById("bienvenida").textContent = "Bienvenido, Resolutor";
-            }
+            document.getElementById("bienvenida").textContent =
+                usuario && usuario.trim() !== "" ? `Bienvenido, ${usuario}` : "Bienvenido, Resolutor";
         }
 
         async function cargarSolicitudes() {
@@ -147,22 +152,57 @@
                 const solicitudes = await response.json();
                 if (!response.ok) throw new Error(solicitudes.error || "Error al obtener las solicitudes");
 
-                const tabla = document.getElementById('solicitudesTabla');
-                tabla.innerHTML = "";
-
-                solicitudes.forEach(solicitud => {
-                    const fila = document.createElement('tr');
-                    fila.innerHTML = `
-                        <td><strong>${solicitud.clave_rastreo}</strong></td>
-                        <td>${solicitud.usuario}</td>
-                        <td>${solicitud.estado}</td>
-                        <td><button onclick="verDetalles('${solicitud.clave_rastreo}')">Detalles</button></td>
-                    `;
-                    tabla.appendChild(fila);
-                });
+                todasLasSolicitudes = solicitudes;
+                mostrarSolicitudes(todasLasSolicitudes);
             } catch (error) {
                 console.error("❌ Error al cargar solicitudes:", error);
             }
+        }
+
+        function mostrarSolicitudes(solicitudes) {
+            const tabla = document.getElementById('solicitudesTabla');
+            tabla.innerHTML = "";
+
+            solicitudes.forEach(solicitud => {
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
+                    <td><strong>${solicitud.clave_rastreo}</strong></td>
+                    <td>${solicitud.usuario}</td>
+                    <td>${solicitud.estado}</td>
+                    <td>${solicitud.tipo_equipo || 'No especificado'}</td>
+                    <td><button onclick="verDetalles('${solicitud.clave_rastreo}')">Detalles</button></td>
+                `;
+                tabla.appendChild(fila);
+            });
+        }
+
+        async function cargarTiposEquipo() {
+            try {
+                const response = await fetch('http://localhost:4000/api/solicitudes/tipos');
+                const tipos = await response.json();
+                if (!response.ok) throw new Error(tipos.error || "Error al obtener tipos de equipo");
+
+                const select = document.getElementById("filtroEquipo");
+                select.innerHTML = '<option value="">Todos los equipos</option>';
+
+                tipos.forEach(tipo => {
+                    const option = document.createElement("option");
+                    option.value = tipo;
+                    option.textContent = tipo;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error("❌ Error al cargar tipos de equipo:", error);
+            }
+        }
+
+        function filtrarPorEquipo() {
+            const tipoSeleccionado = document.getElementById("filtroEquipo").value;
+            const filtradas = tipoSeleccionado === ""
+                ? todasLasSolicitudes
+                : todasLasSolicitudes.filter(solicitud => solicitud.tipo_equipo === tipoSeleccionado);
+
+            mostrarSolicitudes(filtradas);
         }
 
         function verDetalles(claveRastreo) {
@@ -181,12 +221,15 @@
         function cerrarSesion() {
             sessionStorage.removeItem("usuario");
             sessionStorage.removeItem("token");
-            window.location.href = "login.html"; // Redirige a la página de inicio de sesión
+            window.location.href = "login.html";
         }
 
+        // Ejecutar al cargar la página
         obtenerNombreUsuario();
         cargarSolicitudes();
+        cargarTiposEquipo();
     </script>
 </body>
+
 
 </html>

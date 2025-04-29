@@ -66,9 +66,11 @@ const obtenerTodasLasSolicitudes = async () => {
                 s.clave_rastreo,
                 s.usuario,
                 s.resolutor,
-                e.nombre_etapa AS estado
+                et.nombre_etapa AS estado,
+                eq.nombre AS tipo_equipo
             FROM solicitudes s
-            JOIN etapas e ON s.id_etapa = e.id_etapa
+            JOIN etapas et ON s.id_etapa = et.id_etapa
+            JOIN equipos eq ON s.id_equipo = eq.id_equipo
         `);
         return rows;
     } catch (error) {
@@ -187,6 +189,20 @@ const obtenerEquipos = async (nombre_equipo) => {
     }
 };
 
-module.exports = { crearSolicitud, obtenerEquipos, obtenerSolicitudPorClave, obtenerTodasLasSolicitudes, actualizarEstadoEnBD, cancelarSolicitudEnBD, obtenerHistorialDeSolicitud, obtenerEtapasPorEquipo };
+const obtenerTiposEquipo = async () => {
+    try {
+        const query = `
+            SELECT DISTINCT nombre
+            FROM equipos
+        `;
+        const [rows] = await pool.query(query);
+        return rows.map(row => row.nombre);
+    } catch (error) {
+        console.error("❌ Error al obtener tipos de equipo:", error);
+        throw error;
+    }
+};
+
+module.exports = { crearSolicitud, obtenerEquipos, obtenerTiposEquipo, obtenerSolicitudPorClave, obtenerTodasLasSolicitudes, actualizarEstadoEnBD, cancelarSolicitudEnBD, obtenerHistorialDeSolicitud, obtenerEtapasPorEquipo };
 
 

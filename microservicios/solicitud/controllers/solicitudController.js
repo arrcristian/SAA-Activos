@@ -1,6 +1,6 @@
 const Solicitud = require('../models/solicitudModel');
 const { obtenerCorreoSupervisor } = require('../repositories/contactoRepository');
-const { crearSolicitud, obtenerTodasLasSolicitudes, actualizarEstadoEnBD, obtenerSolicitudPorClave, obtenerHistorialDeSolicitud, cancelarSolicitudEnBD } = require('../repositories/solicitudRepository');
+const { crearSolicitud, obtenerTodasLasSolicitudes, actualizarEstadoEnBD, obtenerSolicitudPorClave, obtenerHistorialDeSolicitud, cancelarSolicitudEnBD, obtenerTiposEquipo } = require('../repositories/solicitudRepository');
 const sendEmail = require('../services/emailService');
 const { cambiarEstadoSolicitud, cancelarSolicitud } = require('../services/solicitudService');
 const crypto = require('crypto');
@@ -192,7 +192,18 @@ const cancelar = async (req, res) => {
     }
 };
 
-module.exports = { crearNuevaSolicitud, obtenerSolicitudes, obtenerSeguimiento, procesarRespuestaCorreo, actualizarEstado, cancelar };
+
+const getTiposEquipo = async (req, res) => {
+    try {
+        const tipos = await obtenerTiposEquipo();
+        res.json(tipos);
+    } catch (error) {
+        console.error("❌ Error en getTiposEquipo:", error);
+        res.status(500).json({ error: "Error al obtener los tipos de equipo" });
+    }
+};
+
+module.exports = { crearNuevaSolicitud, obtenerSolicitudes, obtenerSeguimiento, procesarRespuestaCorreo, actualizarEstado, cancelar, getTiposEquipo};
 
 
 
