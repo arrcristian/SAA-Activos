@@ -2,7 +2,7 @@ const Solicitud = require('../models/solicitudModel');
 const { obtenerCorreoSupervisor } = require('../repositories/contactoRepository');
 const { crearSolicitud, obtenerTodasLasSolicitudes, actualizarEstadoEnBD, obtenerSolicitudPorClave, obtenerHistorialDeSolicitud, cancelarSolicitudEnBD, obtenerTiposEquipo } = require('../repositories/solicitudRepository');
 const sendEmail = require('../services/emailService');
-const { cambiarEstadoSolicitud, cancelarSolicitud } = require('../services/solicitudService');
+const { cambiarEstadoSolicitud, cancelarSolicitud, enviarCorreoEncargado, obtenerEtapasValidasPorEquipo } = require('../services/solicitudService');
 const crypto = require('crypto');
 
 // Función para generar un Tracking ID único
@@ -30,43 +30,9 @@ const crearNuevaSolicitud = async (req, res) => {
 
             await sendEmail(email, asuntoUsuario, mensajeUsuario, false);
 
-            // Obtener correo del supervisor
-            const supervisor = await obtenerCorreoSupervisor(departamento);
-
-            if (supervisor) {
-                // Crear enlaces de aprobación y cancelación
-                const enlaceAprobar = `${process.env.APP_URL}/api/solicitudes/respuesta?clave_rastreo=${tracking_id}&respuesta=si`;
-                const enlaceRechazar = `${process.env.APP_URL}/api/solicitudes/respuesta?clave_rastreo=${tracking_id}&respuesta=no`;
-
-                const asuntoSupervisor = "Nueva Solicitud Pendiente";
-                const mensajeSupervisor = `
-    <html>
-    <body>
-        <p>Hola ${supervisor.nombre},</p>
-        <p>Se ha generado una nueva solicitud.</p>
-        <p><strong>Clave de rastreo:</strong> ${tracking_id}</p>
-        <p><strong>Usuario:</strong> ${usuario}</p>
-        <p><strong>Departamento:</strong> ${departamento}</p>
-        <p><strong>Equipo ID:</strong> ${equipo_id}</p>
-        <p>¿Deseas aprobar o cancelar la solicitud?</p>
-        <p>
-            <a href="${enlaceAprobar}" style="display:inline-block;padding:10px;background-color:green;color:white;text-decoration:none;border-radius:5px;">
-                ✅ Aprobar
-            </a> 
-            &nbsp;&nbsp;
-            <a href="${enlaceRechazar}" style="display:inline-block;padding:10px;background-color:red;color:white;text-decoration:none;border-radius:5px;">
-                ❌ Rechazar
-            </a>
-        </p>
-    </body>
-    </html>
-`;
-                await sendEmail(supervisor.email, asuntoSupervisor, mensajeSupervisor, true);
-            }
-
-            return res.status(201).json({ mensaje: "Solicitud creada con éxito", tracking_id });
-        } else {
-            return res.status(500).json({ error: "No se pudo crear la solicitud." });
+            const etapas = await obtenerEtapasValidasPorEquipo(equipo_id);
+            if (!etapas) return res.status(400).json({ error: "No se encontraron las etapas para el equipo requerido." });
+            await enviarCorreoEncargado(etapas[1], tracking_id);
         }
     } catch (error) {
         console.error("Error en el controlador al crear la solicitud:", error);

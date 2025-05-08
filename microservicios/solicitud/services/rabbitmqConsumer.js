@@ -1,7 +1,7 @@
 const amqp = require('amqplib');
 const Solicitud = require('../models/solicitudModel');
 const { crearSolicitud, obtenerEquipos } = require('../repositories/solicitudRepository');
-const { obtenerCorreoSupervisor } = require('../repositories/contactoRepository');
+const { enviarCorreoEncargado, obtenerEtapasValidasPorEquipo } = require('../services/solicitudService');
 const sendEmail = require('./emailService');
 const crypto = require('crypto');
 
@@ -68,41 +68,11 @@ const iniciarConsumidor = async () => {
                         console.log(`📩 Correo enviado a ${email} con tracking ID: ${tracking_id}`);
 
                         // Obtener correo del supervisor
-                        const supervisor = await obtenerCorreoSupervisor(departamento);
+                        const etapas = await obtenerEtapasValidasPorEquipo(equipo_id);
+                        if (!etapas) console.error("No se encontraron las etapas para el equipo requerido.");
+                        await enviarCorreoEncargado(etapas[1], tracking_id);
 
-                        console.log(supervisor);
-                        if (supervisor) {
-                            // Crear enlaces de aprobación y cancelación
-                            const enlaceAprobar = `${process.env.APP_URL}/api/solicitudes/respuesta?clave_rastreo=${tracking_id}&respuesta=si`;
-                            const enlaceRechazar = `${process.env.APP_URL}/api/solicitudes/respuesta?clave_rastreo=${tracking_id}&respuesta=no`;
-
-                            const asuntoSupervisor = "Nueva Solicitud Pendiente";
-                            const mensajeSupervisor = `
-    <html>
-    <body>
-        <p>Hola ${supervisor.nombre},</p>
-        <p>Se ha generado una nueva solicitud.</p>
-        <p><strong>Clave de rastreo:</strong> ${tracking_id}</p>
-        <p><strong>Usuario:</strong> ${usuario}</p>
-        <p><strong>Departamento:</strong> ${departamento}</p>
-        <p><strong>Equipo ID:</strong> ${equipo_id}</p>
-        <p>¿Deseas aprobar o cancelar la solicitud?</p>
-        <p>
-            <a href="${enlaceAprobar}" style="display:inline-block;padding:10px;background-color:green;color:white;text-decoration:none;border-radius:5px;">
-                ✅ Aprobar
-            </a> 
-            &nbsp;&nbsp;
-            <a href="${enlaceRechazar}" style="display:inline-block;padding:10px;background-color:red;color:white;text-decoration:none;border-radius:5px;">
-                ❌ Rechazar
-            </a>
-        </p>
-    </body>
-    </html>
-`;
-                            await sendEmail(supervisor.email, asuntoSupervisor, mensajeSupervisor, true);
-                        }
-
-                        console.log(`📩 Correo enviado a supervisor con correo ${supervisor.email} con tracking ID: ${tracking_id}`);
+                        console.log(`📩 Correo enviado a supervisor con correo ${etapas[1].correo_encargado} con tracking ID: ${tracking_id}`);
                         channel.ack(msg); // Confirma el mensaje
                     } else {
                         console.error("❌ No se pudo crear la solicitud.");

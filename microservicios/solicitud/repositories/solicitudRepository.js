@@ -90,12 +90,14 @@ const obtenerSolicitudPorClave = async (clave_rastreo) => {
                 s.resolutor,
                 s.fecha_creacion,
                 s.fecha_actualizacion,
+                s.id_etapa,
+                s.id_equipo,
                 et.nombre_etapa AS estado,
                 eq.nombre AS tipo_equipo
             FROM solicitudes s
             JOIN etapas et ON s.id_etapa = et.id_etapa
             JOIN equipos eq ON s.id_equipo = eq.id_equipo
-         WHERE s.clave_rastreo = ?`, [clave_rastreo]);
+            WHERE s.clave_rastreo = ?`, [clave_rastreo]);
         return rows.length > 0 ? rows[0] : null;
     } catch (error) {
         console.error("❌ Error al obtener solicitud:", error);
@@ -135,7 +137,7 @@ const actualizarEstadoEnBD = async (clave_rastreo, id_etapa) => {
 const obtenerEtapasPorEquipo = async (id_equipo) => {
     try {
         const query = `
-            SELECT e.id_etapa, e.nombre_etapa
+            SELECT e.id_etapa, e.nombre_etapa, e.nombre_encargado, e.correo_encargado
             FROM etapas e
             JOIN procesos p ON e.id_proceso = p.id_proceso
             JOIN equipos eq ON eq.id_proceso = p.id_proceso
