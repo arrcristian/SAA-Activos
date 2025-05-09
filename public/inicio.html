@@ -144,6 +144,34 @@
     </div>
 
     <script>
+
+        //Validar el token antes de permitir acceso a la página
+        (async function validarToken() {
+            const token = sessionStorage.getItem("token");
+            if (!token || token.trim() === "") {
+                window.location.href = "login.html";
+                return;
+            }
+
+            try {
+                const response = await fetch("http://localhost:3001/api/usuarios/perfil", {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) throw new Error("Token inválido");
+
+                const data = await response.json();
+                sessionStorage.setItem("usuario", data.usuario.usuario);
+            } catch (error) {
+                console.error("Token inválido:", error.message);
+                sessionStorage.removeItem("token");
+                sessionStorage.removeItem("usuario");
+                window.location.href = "login.html";
+            }
+        })();
+
         const solicitudesPorPagina = 10;
         let paginaActual = 1;
         let todasLasSolicitudes = []; // Para mantener todas las solicitudes en memoria
@@ -179,7 +207,7 @@
             const fin = inicio + solicitudesPorPagina;
             const solicitudesPagina = solicitudes.slice(inicio, fin);
 
-            
+
             solicitudesPagina.forEach(solicitud => {
                 const fila = document.createElement('tr');
                 fila.innerHTML = `

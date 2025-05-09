@@ -48,11 +48,13 @@ CREATE TABLE equipos (
     id_proceso INT NOT NULL,
     FOREIGN KEY (id_proceso) REFERENCES procesos(id_proceso)
 );
-
+z
 CREATE TABLE etapas (
     id_etapa INT PRIMARY KEY AUTO_INCREMENT,
     id_proceso INT NOT NULL,
     nombre_etapa VARCHAR(100) NOT NULL,
     orden INT NOT NULL,
+    nombre_encargado VARCHAR(100) DEFAULT NULL,
+    correo_encargado VARCHAR(100) DEFAULT NULL;
     FOREIGN KEY (id_proceso) REFERENCES procesos(id_proceso)
 );

@@ -68,14 +68,26 @@ const cambiarEstadoSolicitud = async (clave_rastreo) => {
 
     const indiceActual = etapas.findIndex(e => e.id_etapa === id_etapa);
     if (indiceActual === -1) return { exito: false, mensaje: "Etapa actual no válida." };
-    if (indiceActual >= etapas.length - 2) return { exito: false, mensaje: "La solicitud ya se encuentra en la última etapa." };
+    
+    // ❌ Ya está en la última etapa
+    if (indiceActual === etapas.length - 1) {
+        return { exito: false, mensaje: "La solicitud ya se encuentra en la última etapa." };
+    }
 
     const siguienteEtapa = etapas[indiceActual + 1];
     const actualizado = await actualizarEstadoEnBD(clave_rastreo, siguienteEtapa.id_etapa);
 
     if (actualizado) {
-        await enviarCorreoEncargado(etapas[indiceActual + 2], clave_rastreo);
-        return { exito: true, mensaje: `Etapa actualizada a "${siguienteEtapa.nombre_etapa}".`, nuevaEtapa: siguienteEtapa };
+        // ⚠️ Solo se envía correo si hay una etapa después
+        if (etapas[indiceActual + 2]) {
+            await enviarCorreoEncargado(etapas[indiceActual + 2], clave_rastreo);
+        }
+
+        return {
+            exito: true,
+            mensaje: `Etapa actualizada a "${siguienteEtapa.nombre_etapa}".`,
+            nuevaEtapa: siguienteEtapa
+        };
     }
 
     return { exito: false, mensaje: "Error al cambiar el estado de la solicitud" };
