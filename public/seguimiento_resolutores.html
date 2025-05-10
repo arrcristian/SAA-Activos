@@ -96,6 +96,10 @@
             </thead>
             <tbody id="historial"></tbody>
         </table>
+        <div class="service-tag-container">
+            <label for="serviceTag">Service Tag del equipo:</label>
+            <input type="text" id="serviceTag" placeholder="Ingrese el Service Tag">
+        </div>
         <div class="buttons-container">
             <button id="btnCambiarEstado" onclick="cambiarEstado()">Cambiar Estado</button>
             <button id="btnCancelar" onclick="cancelarSolicitud()">Cancelar Solicitud</button>
@@ -129,7 +133,7 @@
                 window.location.href = "login.html";
             }
         })();
-        
+
         const urlParams = new URLSearchParams(window.location.search);
         const claveRastreo = urlParams.get('clave');
         document.getElementById("clave_rastreo").textContent = claveRastreo;
@@ -181,27 +185,41 @@
         }
 
         async function cambiarEstado() {
-    try {
-        const response = await fetch(`http://localhost:4000/api/solicitudes/cambiar-estado/${claveRastreo}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" }
-        });
+            const serviceTag = document.getElementById("serviceTag").value.trim();
 
-        const data = await response.json(); // 👈 leer siempre la respuesta
+            // Verificar si el campo está vacío
+            if (!serviceTag) {
+                alert("Debe ingresar un Service Tag para continuar.");
+                return;
+            }
 
-        if (!response.ok) {
-            // Mostrar el mensaje de error devuelto por el backend
-            alert(data.error || "Error al cambiar el estado");
-            return;
+            try {
+                // Verificar si el Service Tag existe
+                const checkResponse = await fetch(`http://localhost:3002/api/inventario/${serviceTag}`);
+                if (!checkResponse.ok) {
+                    alert("El Service Tag no existe en el inventario.");
+                    return;
+                }
+
+                // Si el Service Tag es válido, proceder a cambiar estado
+                const response = await fetch(`http://localhost:4000/api/solicitudes/cambiar-estado/${claveRastreo}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" }
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    alert(data.error || "Error al cambiar el estado");
+                    return;
+                }
+                    
+                alert("Estado actualizado correctamente");
+                cargarDetalles();
+            } catch (error) {
+                console.error("❌ Error al verificar o cambiar estado:", error);
+                alert("Ocurrió un error al verificar el Service Tag o cambiar el estado.");
+            }
         }
-
-        alert("Estado actualizado correctamente");
-        cargarDetalles();
-    } catch (error) {
-        console.error("❌ Error al cambiar estado:", error);
-        alert("Ocurrió un error al cambiar el estado");
-    }
-}
 
         async function cancelarSolicitud() {
             try {
