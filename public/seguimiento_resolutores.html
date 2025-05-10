@@ -74,6 +74,11 @@
         th {
             background-color: #f8f8f8;
         }
+
+        .service-tag-container {
+        display: none;
+        margin-top: 15px;
+    }
     </style>
 </head>
 
@@ -107,7 +112,8 @@
     </div>
 
     <script>
-        //Validar el token antes de permitir acceso a la página
+        let estadoActualGlobal = ""; // Variable global
+
         (async function validarToken() {
             const token = sessionStorage.getItem("token");
             if (!token || token.trim() === "") {
@@ -117,9 +123,7 @@
 
             try {
                 const response = await fetch("http://localhost:3001/api/usuarios/perfil", {
-                    headers: {
-                        "Authorization": `Bearer ${token}`
-                    }
+                    headers: { "Authorization": `Bearer ${token}` }
                 });
 
                 if (!response.ok) throw new Error("Token inválido");
@@ -139,72 +143,86 @@
         document.getElementById("clave_rastreo").textContent = claveRastreo;
 
         async function cargarDetalles() {
-            try {
-                const response = await fetch(`http://localhost:4000/api/solicitudes/seguimiento/${claveRastreo}`);
-                const solicitud = await response.json();
+    try {
+        const response = await fetch(`http://localhost:4000/api/solicitudes/seguimiento/${claveRastreo}`);
+        const solicitud = await response.json();
 
-                if (!response.ok) throw new Error(solicitud.error || "Error al obtener la solicitud");
+        if (!response.ok) throw new Error(solicitud.error || "Error al obtener la solicitud");
 
-                document.getElementById("usuario").textContent = solicitud.usuario;
-                document.getElementById("resolutor").textContent = solicitud.resolutor;
-                document.getElementById("fecha_creacion").textContent = formatearFecha(solicitud.fecha_creacion);
-                document.getElementById("tipo_equipo").textContent = solicitud.tipo_equipo || "No especificado";
+        document.getElementById("usuario").textContent = solicitud.usuario;
+        document.getElementById("resolutor").textContent = solicitud.resolutor;
+        document.getElementById("fecha_creacion").textContent = formatearFecha(solicitud.fecha_creacion);
+        document.getElementById("tipo_equipo").textContent = solicitud.tipo_equipo || "No especificado";
 
-                const historial = solicitud.historial;
-                if (historial && historial.length > 0) {
-                    const ultimaEtapa = historial[historial.length - 1];
-                    document.getElementById("estado").textContent = ultimaEtapa.nombre_etapa || "Sin estado";
-                } else {
-                    document.getElementById("estado").textContent = "Sin historial";
-                }
-
-                const historialContainer = document.getElementById("historial");
-                historialContainer.innerHTML = "";
-                solicitud.historial.forEach(entry => {
-                    const fechaFormateada = formatearFecha(entry.fecha_cambio);
-                    const row = document.createElement("tr");
-                    row.innerHTML = `<td>${entry.nombre_etapa}</td><td>${fechaFormateada}</td>`;
-                    historialContainer.appendChild(row);
-                });
-            } catch (error) {
-                console.error("❌ Error al cargar detalles:", error);
-            }
+        const historial = solicitud.historial;
+        let estadoTexto = "Sin historial";
+        if (historial && historial.length > 0) {
+            const ultimaEtapa = historial[historial.length - 1];
+            estadoTexto = ultimaEtapa.nombre_etapa || "Sin estado";
         }
+
+        document.getElementById("estado").textContent = estadoTexto;
+        estadoActualGlobal = estadoTexto.trim().toLowerCase(); // Guardamos el estado actual
+
+        // Mostrar u ocultar el campo de Service Tag según el estado
+        const contenedorServiceTag = document.querySelector(".service-tag-container");
+        const inputServiceTag = document.getElementById("serviceTag");
+        if (estadoActualGlobal === "preparación de equipo") {
+            contenedorServiceTag.style.display = "block";
+        } else {
+            contenedorServiceTag.style.display = "none";
+            inputServiceTag.value = ""; // Limpiar si se oculta
+        }
+
+        const historialContainer = document.getElementById("historial");
+        historialContainer.innerHTML = "";
+        solicitud.historial.forEach(entry => {
+            const fechaFormateada = formatearFecha(entry.fecha_cambio);
+            const row = document.createElement("tr");
+            row.innerHTML = `<td>${entry.nombre_etapa}</td><td>${fechaFormateada}</td>`;
+            historialContainer.appendChild(row);
+        });
+    } catch (error) {
+        console.error("❌ Error al cargar detalles:", error);
+    }
+}
+
 
         function formatearFecha(fechaISO) {
             if (!fechaISO) return 'Fecha no disponible';
-
             const fecha = new Date(fechaISO);
             const dia = String(fecha.getDate()).padStart(2, '0');
             const mes = String(fecha.getMonth() + 1).padStart(2, '0');
             const año = fecha.getFullYear();
             const horas = String(fecha.getHours()).padStart(2, '0');
             const minutos = String(fecha.getMinutes()).padStart(2, '0');
-
             return `${dia}/${mes}/${año} | ${horas}:${minutos}`;
         }
 
         async function cambiarEstado() {
             const serviceTag = document.getElementById("serviceTag").value.trim();
+            const estadoActual = estadoActualGlobal;
 
-            // Verificar si el campo está vacío
-            if (!serviceTag) {
+            // Solo pedir service tag si estamos en preparación de equipo
+            if (estadoActual === "preparación de equipo" && !serviceTag) {
                 alert("Debe ingresar un Service Tag para continuar.");
                 return;
             }
 
             try {
-                // Verificar si el Service Tag existe
-                const checkResponse = await fetch(`http://localhost:3002/api/inventario/${serviceTag}`);
-                if (!checkResponse.ok) {
-                    alert("El Service Tag no existe en el inventario.");
-                    return;
+                // Si es preparación de equipo, validar Service Tag
+                if (estadoActual === "preparación de equipo") {
+                    const checkResponse = await fetch(`http://localhost:3002/api/inventario/${serviceTag}`);
+                    if (!checkResponse.ok) {
+                        alert("El Service Tag no existe en el inventario.");
+                        return;
+                    }
                 }
 
-                // Si el Service Tag es válido, proceder a cambiar estado
                 const response = await fetch(`http://localhost:4000/api/solicitudes/cambiar-estado/${claveRastreo}`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" }
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ serviceTag: estadoActual === "preparación de equipo" ? serviceTag : null })
                 });
 
                 const data = await response.json();
@@ -212,7 +230,7 @@
                     alert(data.error || "Error al cambiar el estado");
                     return;
                 }
-                    
+
                 alert("Estado actualizado correctamente");
                 cargarDetalles();
             } catch (error) {
@@ -239,5 +257,7 @@
         cargarDetalles();
     </script>
 </body>
+
+
 
 </html>
