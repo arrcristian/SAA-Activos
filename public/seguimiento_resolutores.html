@@ -76,9 +76,35 @@
         }
 
         .service-tag-container {
-        display: none;
-        margin-top: 15px;
-    }
+            display: none;
+            margin-top: 15px;
+        }
+
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 15% auto;
+            padding: 20px;
+            width: 300px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .close {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -101,13 +127,54 @@
             </thead>
             <tbody id="historial"></tbody>
         </table>
-        <div class="service-tag-container">
-            <label for="serviceTag">Service Tag del equipo:</label>
-            <input type="text" id="serviceTag" placeholder="Ingrese el Service Tag">
-        </div>
         <div class="buttons-container">
             <button id="btnCambiarEstado" onclick="cambiarEstado()">Cambiar Estado</button>
             <button id="btnCancelar" onclick="cancelarSolicitud()">Cancelar Solicitud</button>
+        </div>
+    </div>
+
+    <div id="modalServiceTag" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span onclick="cerrarModalServiceTag()" class="close">&times;</span>
+            <h2>Validar Service Tag</h2>
+            <input type="text" id="inputServiceTagModal" placeholder="Ingresa el Service Tag" />
+            <button onclick="validarYEnviarServiceTag()">Validar</button>
+            <button onclick="cerrarModalServiceTag()">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="modalDatosEquipo" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span onclick="cerrarModalDatosEquipo()" class="close">&times;</span>
+            <h2>Datos del equipo</h2>
+
+            <div>
+                <label><strong>Folio:</strong></label>
+                <p id="campoFolio">--</p>
+            </div>
+            <div>
+                <label><strong>Número de Empleado:</strong></label>
+                <p id="campoNumeroEmpleado">--</p>
+            </div>
+            <div>
+                <label><strong>Nombre:</strong></label>
+                <p id="campoNombre">--</p>
+            </div>
+            <div>
+                <label><strong>Nombre de Equipo:</strong></label>
+                <p id="campoNombreEquipo">--</p>
+            </div>
+            <div>
+                <label><strong>Sucursal:</strong></label>
+                <p id="campoSucursal">--</p>
+            </div>
+            <div>
+                <label><strong>Correo:</strong></label>
+                <p id="campoCorreo">--</p>
+            </div>
+
+            <button onclick="cerrarModalDatosEquipo()">Cancelar</button>
+            <button onclick="confirmarCambioFinal()">Aceptar</button>
         </div>
     </div>
 
@@ -143,50 +210,39 @@
         document.getElementById("clave_rastreo").textContent = claveRastreo;
 
         async function cargarDetalles() {
-    try {
-        const response = await fetch(`http://localhost:4000/api/solicitudes/seguimiento/${claveRastreo}`);
-        const solicitud = await response.json();
+            try {
+                const response = await fetch(`http://localhost:4000/api/solicitudes/seguimiento/${claveRastreo}`);
+                const solicitud = await response.json();
 
-        if (!response.ok) throw new Error(solicitud.error || "Error al obtener la solicitud");
+                if (!response.ok) throw new Error(solicitud.error || "Error al obtener la solicitud");
 
-        document.getElementById("usuario").textContent = solicitud.usuario;
-        document.getElementById("resolutor").textContent = solicitud.resolutor;
-        document.getElementById("fecha_creacion").textContent = formatearFecha(solicitud.fecha_creacion);
-        document.getElementById("tipo_equipo").textContent = solicitud.tipo_equipo || "No especificado";
+                document.getElementById("usuario").textContent = solicitud.usuario;
+                document.getElementById("resolutor").textContent = solicitud.resolutor;
+                document.getElementById("fecha_creacion").textContent = formatearFecha(solicitud.fecha_creacion);
+                document.getElementById("tipo_equipo").textContent = solicitud.tipo_equipo || "No especificado";
 
-        const historial = solicitud.historial;
-        let estadoTexto = "Sin historial";
-        if (historial && historial.length > 0) {
-            const ultimaEtapa = historial[historial.length - 1];
-            estadoTexto = ultimaEtapa.nombre_etapa || "Sin estado";
+                const historial = solicitud.historial;
+                let estadoTexto = "Sin historial";
+                if (historial && historial.length > 0) {
+                    const ultimaEtapa = historial[historial.length - 1];
+                    estadoTexto = ultimaEtapa.nombre_etapa || "Sin estado";
+                }
+
+                document.getElementById("estado").textContent = estadoTexto;
+                estadoActualGlobal = estadoTexto.trim().toLowerCase(); // Guardamos el estado actual
+
+                const historialContainer = document.getElementById("historial");
+                historialContainer.innerHTML = "";
+                solicitud.historial.forEach(entry => {
+                    const fechaFormateada = formatearFecha(entry.fecha_cambio);
+                    const row = document.createElement("tr");
+                    row.innerHTML = `<td>${entry.nombre_etapa}</td><td>${fechaFormateada}</td>`;
+                    historialContainer.appendChild(row);
+                });
+            } catch (error) {
+                console.error("❌ Error al cargar detalles:", error);
+            }
         }
-
-        document.getElementById("estado").textContent = estadoTexto;
-        estadoActualGlobal = estadoTexto.trim().toLowerCase(); // Guardamos el estado actual
-
-        // Mostrar u ocultar el campo de Service Tag según el estado
-        const contenedorServiceTag = document.querySelector(".service-tag-container");
-        const inputServiceTag = document.getElementById("serviceTag");
-        if (estadoActualGlobal === "preparación de equipo") {
-            contenedorServiceTag.style.display = "block";
-        } else {
-            contenedorServiceTag.style.display = "none";
-            inputServiceTag.value = ""; // Limpiar si se oculta
-        }
-
-        const historialContainer = document.getElementById("historial");
-        historialContainer.innerHTML = "";
-        solicitud.historial.forEach(entry => {
-            const fechaFormateada = formatearFecha(entry.fecha_cambio);
-            const row = document.createElement("tr");
-            row.innerHTML = `<td>${entry.nombre_etapa}</td><td>${fechaFormateada}</td>`;
-            historialContainer.appendChild(row);
-        });
-    } catch (error) {
-        console.error("❌ Error al cargar detalles:", error);
-    }
-}
-
 
         function formatearFecha(fechaISO) {
             if (!fechaISO) return 'Fecha no disponible';
@@ -198,44 +254,132 @@
             const minutos = String(fecha.getMinutes()).padStart(2, '0');
             return `${dia}/${mes}/${año} | ${horas}:${minutos}`;
         }
+        /*
+                async function cambiarEstado() {
+                    const serviceTag = document.getElementById("serviceTag").value.trim();
+                    const estadoActual = estadoActualGlobal;
+        
+                    // Solo pedir service tag si estamos en preparación de equipo
+                    if (estadoActual === "preparación de equipo" && !serviceTag) {
+                        alert("Debe ingresar un Service Tag para continuar.");
+                        return;
+                    }
+        
+                    try {
+                        // Si es preparación de equipo, validar Service Tag
+                        if (estadoActual === "preparación de equipo") {
+                            const checkResponse = await fetch(`http://localhost:3002/api/inventario/${serviceTag}`);
+                            if (!checkResponse.ok) {
+                                alert("El Service Tag no existe en el inventario.");
+                                return;
+                            }
+                        }
+        
+                        const response = await fetch(`http://localhost:4000/api/solicitudes/cambiar-estado/${claveRastreo}`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ serviceTag: estadoActual === "preparación de equipo" ? serviceTag : null })
+                        });
+        
+                        const data = await response.json();
+                        if (!response.ok) {
+                            alert(data.error || "Error al cambiar el estado");
+                            return;
+                        }
+        
+                        alert("Estado actualizado correctamente");
+                        cargarDetalles();
+                    } catch (error) {
+                        console.error("❌ Error al verificar o cambiar estado:", error);
+                        alert("Ocurrió un error al verificar el Service Tag o cambiar el estado.");
+                    }
+                }*/
 
-        async function cambiarEstado() {
-            const serviceTag = document.getElementById("serviceTag").value.trim();
-            const estadoActual = estadoActualGlobal;
+        function cambiarEstado() {
+            if (estadoActualGlobal === "preparación de equipo") {
+                mostrarModalServiceTag();
+            } else if (estadoActualGlobal === "documentación final") {
+                verificarServiceTag();
+            } else {
+                enviarCambioEstado(null);
+            }
+        }
 
-            // Solo pedir service tag si estamos en preparación de equipo
-            if (estadoActual === "preparación de equipo" && !serviceTag) {
-                alert("Debe ingresar un Service Tag para continuar.");
+        function mostrarModalServiceTag() {
+            const modal = document.getElementById("modalServiceTag");
+            modal.style.display = "block";
+        }
+
+        function cerrarModalServiceTag() {
+            const modal = document.getElementById("modalServiceTag");
+            document.getElementById("inputServiceTagModal").value = "";
+            modal.style.display = "none";
+        }
+
+        function cerrarModalDatosEquipo() {
+            const modal = document.getElementById("modalDatosEquipo");
+            modal.style.display = "none";
+        }
+
+        async function confirmarCambioFinal() {
+            await finalizarSolicitud();
+            cerrarModalDatosEquipo(); 
+        }
+
+        function mostrarDatosEnModal(datos) {
+            document.getElementById("campoFolio").textContent = datos.FolioImagen;
+            document.getElementById("campoNumeroEmpleado").textContent = datos.NumeroEmpleado;
+            document.getElementById("campoNombre").textContent = datos.NombreEmpleado;
+            document.getElementById("campoNombreEquipo").textContent = datos.NombreEquipo;
+            document.getElementById("campoSucursal").textContent = datos.SucursalEmpleado;
+            document.getElementById("campoCorreo").textContent = datos.CorreoEmpleado;
+
+            document.getElementById("modalDatosEquipo").style.display = "block";
+        }
+
+        async function verificarServiceTag() {
+            const response2 = await fetch(`http://localhost:4000/api/solicitudes/service-tag/${claveRastreo}`);
+            const solicitud = await response2.json();
+
+            if (!response2.ok) throw new Error(solicitud.error || "Error al obtener la solicitud");
+
+            if (solicitud.service_tag != null) {
+                try {
+                    const response = await fetch(`http://localhost:3002/api/inventario/${solicitud.service_tag}`);
+                    if (!response.ok) {
+                        alert("Service Tag no encontrado.");
+                        return;
+                    }
+                    const datos = await response.json();
+                    alert(datos.FolioImagen);
+                    mostrarDatosEnModal(datos);
+                } catch (error) {
+                    console.error("Error validando el Service Tag:", error);
+                    alert("Ocurrió un error al validar el Service Tag.");
+                }
+            }
+        }
+
+        async function validarYEnviarServiceTag() {
+            const serviceTag = document.getElementById("inputServiceTagModal").value.trim();
+            if (!serviceTag) {
+                alert("Debe ingresar un Service Tag.");
                 return;
             }
 
             try {
-                // Si es preparación de equipo, validar Service Tag
-                if (estadoActual === "preparación de equipo") {
-                    const checkResponse = await fetch(`http://localhost:3002/api/inventario/${serviceTag}`);
-                    if (!checkResponse.ok) {
-                        alert("El Service Tag no existe en el inventario.");
-                        return;
-                    }
-                }
-
-                const response = await fetch(`http://localhost:4000/api/solicitudes/cambiar-estado/${claveRastreo}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ serviceTag: estadoActual === "preparación de equipo" ? serviceTag : null })
-                });
-
-                const data = await response.json();
+                const response = await fetch(`http://localhost:3002/api/inventario/${serviceTag}`);
                 if (!response.ok) {
-                    alert(data.error || "Error al cambiar el estado");
+                    alert("Service Tag no encontrado.");
                     return;
                 }
 
-                alert("Estado actualizado correctamente");
-                cargarDetalles();
+                // Enviar cambio de estado con el service tag
+                await enviarCambioEstado(serviceTag);
+                cerrarModalServiceTag();
             } catch (error) {
-                console.error("❌ Error al verificar o cambiar estado:", error);
-                alert("Ocurrió un error al verificar el Service Tag o cambiar el estado.");
+                console.error("Error validando el Service Tag:", error);
+                alert("Ocurrió un error al validar el Service Tag.");
             }
         }
 
@@ -254,10 +398,88 @@
             }
         }
 
+        async function finalizarSolicitud() {
+            //const correo = document.getElementById("campoCorreo").value;
+            const correo = "kingue2811@gmail.com";
+            const imagen = document.getElementById("campoFolio").textContent;
+            const nombre_empleado = document.getElementById("campoNombre").textContent;
+            alert(nombre_empleado);
+            if (!correo || !imagen) {
+                alert("Faltan datos: correo o imagen.");
+                return;
+            }
+            alert("LLegue a finalizar");
+            try {
+                const response = await fetch(`http://localhost:4000/api/solicitudes/finalizar-solicitud/${claveRastreo}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        correoEmpleado: correo,
+                        imagen: imagen,
+                        nombre: nombre_empleado
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    alert(data.error || "Error al finalizar solicitud");
+                    return;
+                }
+
+                alert("Solicitud finalizada y correo enviado.");
+                cargarDetalles();
+            } catch (error) {
+                console.error("Error al finalizar solicitud:", error);
+                alert("Error de red al finalizar.");
+            }
+        }
+
+        async function enviarCambioEstado(service_tag) {
+            try {
+                const response = await fetch(`http://localhost:4000/api/solicitudes/cambiar-estado/${claveRastreo}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ service_tag })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    alert(data.error || "Error al cambiar el estado");
+                    return;
+                }
+
+                alert("Estado actualizado correctamente");
+
+                if (service_tag != null) {
+                    const response2 = await fetch(`http://localhost:4000/api/solicitudes/service-tag/${claveRastreo}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ service_tag })
+                    });
+
+                    const data2 = await response2.json();
+                    if (!response2.ok) {
+                        alert(data.error || "Error al cambiar el estado");
+                        return;
+                    }
+
+                    alert("Service Tag registrado correctamente");
+                }
+                cargarDetalles(); // Refrescar página
+            } catch (error) {
+                console.error("Error al cambiar estado:", error);
+                alert("Error de red al cambiar el estado.");
+            }
+        }
+
         cargarDetalles();
     </script>
 </body>
-
-
 
 </html>

@@ -73,6 +73,7 @@ const obtenerTodasLasSolicitudes = async () => {
             FROM solicitudes s
             JOIN etapas et ON s.id_etapa = et.id_etapa
             JOIN equipos eq ON s.id_equipo = eq.id_equipo
+            WHERE et.nombre_etapa NOT IN ('Solicitud Cancelada', 'Solicitud Finalizada')
         `);
         return rows;
     } catch (error) {
@@ -219,6 +220,36 @@ const obtenerTiposEquipo = async () => {
     }
 };
 
-module.exports = { crearSolicitud, obtenerEquipos, obtenerTiposEquipo, obtenerSolicitudPorClave, obtenerTodasLasSolicitudes, actualizarEstadoEnBD, cancelarSolicitudEnBD, obtenerHistorialDeSolicitud, obtenerEtapasPorEquipo };
+const actualizarServiceTag = async (clave_rastreo, service_tag) => {
+    try {
+        const [result] = await pool.query(`
+            UPDATE solicitudes
+            SET service_tag = ?, fecha_actualizacion = CURRENT_TIMESTAMP
+            WHERE clave_rastreo = ?
+        `, [service_tag, clave_rastreo]);
+
+        return result.affectedRows > 0;
+    } catch (error) {
+        console.error("❌ Error al actualizar el Service Tag:", error);
+        throw error;
+    }
+};
+
+const obtenerServiceTagPorClave = async (clave_rastreo) => {
+    try {
+        const [rows] = await pool.query(`
+            SELECT service_tag
+            FROM solicitudes
+            WHERE clave_rastreo = ?
+        `, [clave_rastreo]);
+
+        return rows.length > 0 ? rows[0].service_tag : null;
+    } catch (error) {
+        console.error("❌ Error al obtener el Service Tag:", error);
+        throw error;
+    }
+};
+
+module.exports = { actualizarServiceTag, obtenerServiceTagPorClave, crearSolicitud, obtenerEquipos, obtenerTiposEquipo, obtenerSolicitudPorClave, obtenerTodasLasSolicitudes, actualizarEstadoEnBD, cancelarSolicitudEnBD, obtenerHistorialDeSolicitud, obtenerEtapasPorEquipo };
 
 

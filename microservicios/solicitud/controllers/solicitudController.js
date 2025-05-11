@@ -1,8 +1,8 @@
 const Solicitud = require('../models/solicitudModel');
 const { obtenerCorreoSupervisor } = require('../repositories/contactoRepository');
-const { crearSolicitud, obtenerTodasLasSolicitudes, actualizarEstadoEnBD, obtenerSolicitudPorClave, obtenerHistorialDeSolicitud, cancelarSolicitudEnBD, obtenerTiposEquipo } = require('../repositories/solicitudRepository');
+const { actualizarServiceTag, obtenerServiceTagPorClave, crearSolicitud, obtenerTodasLasSolicitudes, actualizarEstadoEnBD, obtenerSolicitudPorClave, obtenerHistorialDeSolicitud, cancelarSolicitudEnBD, obtenerTiposEquipo } = require('../repositories/solicitudRepository');
 const sendEmail = require('../services/emailService');
-const { cambiarEstadoSolicitud, cancelarSolicitud, enviarCorreoEncargado, obtenerEtapasValidasPorEquipo } = require('../services/solicitudService');
+const { finalizarSolicitudConCorreo, cambiarEstadoSolicitud, cancelarSolicitud, enviarCorreoEncargado, obtenerEtapasValidasPorEquipo } = require('../services/solicitudService');
 const crypto = require('crypto');
 
 // Función para generar un Tracking ID único
@@ -36,6 +36,28 @@ const crearNuevaSolicitud = async (req, res) => {
         }
     } catch (error) {
         console.error("Error en el controlador al crear la solicitud:", error);
+        return res.status(500).json({ error: "Error interno del servidor." });
+    }
+};
+
+const finalizarSolicitud = async (req, res) => {
+    try {
+        const { clave_rastreo } = req.params;
+        const { correoEmpleado, imagen, nombre } = req.body;
+
+        if (!clave_rastreo || !correoEmpleado || !imagen || !nombre) {
+            return res.status(400).json({ error: "Faltan datos obligatorios." });
+        }
+
+        const resultado = await finalizarSolicitudConCorreo(clave_rastreo, correoEmpleado, imagen, nombre);
+
+        if (resultado.exito) {
+            return res.status(200).json({ mensaje: "Solicitud finalizada y correo enviado." });
+        } else {
+            return res.status(400).json({ error: resultado.mensaje });
+        }
+    } catch (error) {
+        console.error("❌ Error en finalizarSolicitudController:", error);
         return res.status(500).json({ error: "Error interno del servidor." });
     }
 };
@@ -99,10 +121,10 @@ const procesarRespuestaCorreo = async (req, res) => {
         let actualizado;
         if (respuesta === "si") {
             actualizado = await cambiarEstadoSolicitud(clave_rastreo);
-            nuevoEstado="actualizada";
+            nuevoEstado = "actualizada";
         } else if (respuesta === "no") {
             actualizado = await cancelarSolicitud(clave_rastreo);
-            nuevoEstado="cancelada";
+            nuevoEstado = "cancelada";
         } else {
             return res.status(400).send("Respuesta no válida.");
         }
@@ -171,7 +193,45 @@ const getTiposEquipo = async (req, res) => {
     }
 };
 
-module.exports = { crearNuevaSolicitud, obtenerSolicitudes, obtenerSeguimiento, procesarRespuestaCorreo, actualizarEstado, cancelar, getTiposEquipo};
+// Actualizar el Service Tag
+const actualizarServiceTagController = async (req, res) => {
+    const { clave_rastreo } = req.params;
+    const { service_tag } = req.body;
+
+    if (!service_tag) {
+        return res.status(400).json({ error: "El campo 'service_tag' es requerido." });
+    }
+
+    try {
+        const actualizado = await actualizarServiceTag(clave_rastreo, service_tag);
+        if (actualizado) {
+            return res.status(200).json({ mensaje: "Service Tag actualizado correctamente." });
+        } else {
+            return res.status(404).json({ error: "No se encontró la solicitud o no se pudo actualizar." });
+        }
+    } catch (error) {
+        return res.status(500).json({ error: "Error al actualizar el Service Tag." });
+    }
+};
+
+// Obtener el Service Tag
+const obtenerServiceTagController = async (req, res) => {
+    const { clave_rastreo } = req.params;
+
+    try {
+        const service_tag = await obtenerServiceTagPorClave(clave_rastreo);
+        if (service_tag) {
+            return res.status(200).json({ service_tag });
+        } else {
+            return res.status(404).json({ error: "No se encontró el Service Tag para esta solicitud." });
+        }
+    } catch (error) {
+        return res.status(500).json({ error: "Error al obtener el Service Tag." });
+    }
+};
+
+
+module.exports = { finalizarSolicitud, actualizarServiceTagController, obtenerServiceTagController, crearNuevaSolicitud, obtenerSolicitudes, obtenerSeguimiento, procesarRespuestaCorreo, actualizarEstado, cancelar, getTiposEquipo };
 
 
 

@@ -70,7 +70,7 @@ const cambiarEstadoSolicitud = async (clave_rastreo) => {
     if (indiceActual === -1) return { exito: false, mensaje: "Etapa actual no válida." };
     
     // ❌ Ya está en la última etapa
-    if (indiceActual === etapas.length - 1) {
+    if (indiceActual === etapas.length - 2) {
         return { exito: false, mensaje: "La solicitud ya se encuentra en la última etapa." };
     }
 
@@ -128,7 +128,29 @@ const cancelarSolicitud = async (clave_rastreo) => {
     return { exito: false, mensaje: "Error al cancelar la solicitud" };
 };
 
+const finalizarSolicitudConCorreo = async (clave_rastreo, correoEmpleado, imagenCarta, nombre) => {
+    const actualizado = await cambiarEstadoSolicitud(clave_rastreo);
+
+    if (!actualizado.exito) {
+        return { exito: false, mensaje: "No se pudo finalizar la solicitud." };
+    }
+
+    imagenCarta = imagenCarta + ".jpg";
+    const mensaje = `
+        <p>Hola ${nombre},</p>
+        <p>Tu solicitud con clave <strong>${clave_rastreo}</strong> ha sido <strong>finalizada</strong>.</p>
+        <p>Adjunto encontrarás la carta compromiso.</p>
+        <p>Saludos,<br>Equipo de Soporte Técnico</p>
+        <img src="${imagenCarta}" style="max-width:600px; margin-top:20px;" alt="Carta compromiso" />
+    `;
+
+    await sendEmail(correoEmpleado, "Finalización de solicitud y carta compromiso", mensaje, true);
+
+    return { exito: true };
+};
+
 module.exports = {
+    finalizarSolicitudConCorreo,
     cambiarEstadoSolicitud,
     cancelarSolicitud,
     obtenerEtapasValidasPorEquipo, // opcional exportar
