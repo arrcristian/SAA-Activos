@@ -229,7 +229,17 @@
                 }
 
                 document.getElementById("estado").textContent = estadoTexto;
-                estadoActualGlobal = estadoTexto.trim().toLowerCase(); // Guardamos el estado actual
+                const estadoNormalizado = estadoTexto.trim().toLowerCase();
+                estadoActualGlobal = estadoNormalizado;
+
+                if (["solicitud cancelada", "solicitud finalizada"].includes(estadoNormalizado)) {
+                    btnCambiarEstado.disabled = true;
+                    btnCancelar.disabled = true;
+                    btnCambiarEstado.style.backgroundColor = "#ccc";
+                    btnCancelar.style.backgroundColor = "#ccc";
+                    btnCambiarEstado.style.cursor = "not-allowed";
+                    btnCancelar.style.cursor = "not-allowed";
+                }
 
                 const historialContainer = document.getElementById("historial");
                 historialContainer.innerHTML = "";
@@ -323,7 +333,7 @@
 
         async function confirmarCambioFinal() {
             await finalizarSolicitud();
-            cerrarModalDatosEquipo(); 
+            cerrarModalDatosEquipo();
         }
 
         function mostrarDatosEnModal(datos) {
