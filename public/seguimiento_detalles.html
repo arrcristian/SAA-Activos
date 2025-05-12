@@ -7,12 +7,35 @@
     <style>
         body {
             font-family: 'Arial', sans-serif;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+
+        nav {
+            width: 100%;
+            background-color: #007bff;
+            padding: 10px 20px;
+            box-sizing: border-box;
+        }
+
+        nav button {
+            background-color: white;
+            color: #007bff;
+            font-weight: bold;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .main-content {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            background-color: #f4f4f4;
-            margin: 0;
+            height: calc(100vh - 60px);
+            /* ajusta según la altura del nav */
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         .details-container {
@@ -55,6 +78,11 @@
 </head>
 
 <body>
+    <nav>
+        <button onclick="window.location.href='seguimiento.html'">← Volver a Inicio</button>
+    </nav>
+
+    <div class="main-content">
     <div class="details-container">
         <h2>Detalles de la Solicitud</h2>
         <p><strong>Clave de Rastreo:</strong> <span id="ticket_id"></span></p>
@@ -73,6 +101,7 @@
             </thead>
             <tbody id="historial"></tbody>
         </table>
+    </div>
     </div>
 
     <script>

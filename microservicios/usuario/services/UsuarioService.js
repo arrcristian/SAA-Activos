@@ -15,7 +15,7 @@ class UsuarioService {
         return await UsuarioRepository.obtenerTodosLosUsuarios();
     }
 
-    async loginUsuario(usuario, contrasena) {
+    async loginUsuario(usuario, contrasena) {   
         if (!usuario || !contrasena) {
             throw { status: 400, message: "Usuario y contraseña son requeridos" };
         }
@@ -35,7 +35,7 @@ class UsuarioService {
         const token = jwt.sign(
             { id: usuarioDB.id, usuario: usuarioDB.usuario },
             process.env.JWT_SECRET,
-            { expiresIn: '60m' }
+            { expiresIn: '3h' }
         );
 
         return { token, usuario: usuarioDB.usuario };

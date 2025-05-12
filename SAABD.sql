@@ -8,11 +8,11 @@ CREATE TABLE contactos (
     nombre VARCHAR(100) NOT NULL,
     puesto VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
-    departamento VARCHAR(100) NOT NULL
+    departamento VARCHAR(100) NOT NULL		
 );
 
 INSERT INTO contactos (nombre, puesto, email, departamento) 
-VALUES ('Kingue Quintana', 'Supervisor', 'kingue2003@gmail.com', 'Sales');
+VALUES ('Carlos López', 'Supervisor', 'kingue2003@gmail.com', 'TI');
 
 CREATE TABLE procesos (
     id_proceso INT PRIMARY KEY AUTO_INCREMENT,
@@ -66,6 +66,7 @@ CREATE TABLE etapas (
 );
 
 INSERT INTO etapas (id_proceso, nombre_etapa, orden) VALUES
+-- Proceso 1
 (1, 'Solicitud Recibida', 1),
 (1, 'Autorización Sistemas', 2),
 (1, 'Autorización Dirección', 3),
@@ -74,6 +75,8 @@ INSERT INTO etapas (id_proceso, nombre_etapa, orden) VALUES
 (1, 'Documentación Final', 6),
 (1, 'Solicitud Finalizada', 7),
 (1, 'Solicitud Cancelada', 8),
+
+-- Proceso 2
 (2, 'Solicitud Recibida', 1),
 (2, 'Autorización RH', 2),
 (2, 'Autorización Sistemas', 3),
@@ -84,12 +87,15 @@ INSERT INTO etapas (id_proceso, nombre_etapa, orden) VALUES
 (2, 'Documentación Final', 8),
 (2, 'Solicitud Finalizada', 9),
 (2, 'Solicitud Cancelada', 10),
+
+-- Proceso 3
 (3, 'Solicitud Recibida', 1),
 (3, 'Autorización Sistemas', 2),
-(3, 'Etapa de entrega', 3),
-(3, 'Documentación Final', 4),
-(3, 'Solicitud Finalizada', 5),
-(3, 'Solicitud Cancelada', 6);
+(3, 'Preparación de Equipo', 3),
+(3, 'Etapa de entrega', 4),
+(3, 'Documentación Final', 5),
+(3, 'Solicitud Finalizada', 6),
+(3, 'Solicitud Cancelada', 7);
 
 CREATE TABLE solicitudes (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -104,6 +110,7 @@ CREATE TABLE solicitudes (
     id_etapa INT NOT NULL,
     fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    service_tag VARCHAR(100) DEFAULT NULL,
     FOREIGN KEY (id_equipo) REFERENCES equipos(id_equipo) ON DELETE CASCADE,
     FOREIGN KEY (id_etapa) REFERENCES etapas(id_etapa) ON DELETE CASCADE
 );
@@ -143,6 +150,4 @@ WHERE nombre_etapa = 'Autorización Dirección' AND id_proceso = 2;
 -- Proceso 3
 UPDATE etapas SET nombre_encargado = 'Encargado Sistemas', correo_encargado = 'ebasulto@gtepeyac.com'
 WHERE nombre_etapa = 'Autorización Sistemas' AND id_proceso = 3;
-
-ALTER TABLE solicitudes ADD COLUMN service_tag VARCHAR(100) DEFAULT NULL;
 
