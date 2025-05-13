@@ -1,5 +1,20 @@
+/**
+ * ===============================================================
+ * Nombre del archivo : inventarioController.js
+ * Autores            : Abraham Eduardo Quintana García, Cristian Eduardo Arreola Valenzuela
+ * Descripción        : Establece métodos para manejar las peticiones relacionadas con la base de datos de Access.
+ * Última modificación: 2025-05-12
+ * ===============================================================
+ */
+
 const { buscarEquipoPorSerie } = require('../services/inventarioService');
 
+/**
+ * Obtiene los datos del equipo desde el inventario en la base de datos de Access.
+ * @param {import('express').Request} req - Objeto de solicitud HTTP que contiene el service tag.
+ * @param {import('express').Response} res - Objeto de respuesta HTTP que regresa el equipo obtenido.
+ * @returns {Promise<void>} 
+ */
 async function obtenerEquipo(req, res) {
   const { serie } = req.params;
 

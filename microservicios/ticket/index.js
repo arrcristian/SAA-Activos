@@ -1,3 +1,12 @@
+/**
+ * ===============================================================
+ * Nombre del archivo : index.js
+ * Autores            : Abraham Eduardo Quintana García, Cristian Eduardo Arreola Valenzuela
+ * Descripción        : Inicia el microservicio de ticket.
+ * Última modificación: 2025-05-12
+ * ===============================================================
+ */
+
 const express = require('express');
 const { connectDatabase } = require('./config/db'); 
 const { connectRabbitMQ } = require('./config/rabbitmq');
@@ -10,6 +19,9 @@ app.use('/api/tickets', ticketRoutes);
 
 const PORT = process.env.PORT || 3000;
 
+/**
+ * Método que se encarga de inicializar el servidor de tickets.
+ */
 const startServer = async () => {
     await connectDatabase(); 
     await connectRabbitMQ();

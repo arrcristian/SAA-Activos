@@ -1,6 +1,19 @@
-const db = require('../config/db'); // Importa el módulo con pool
+/**
+ * ===============================================================
+ * Nombre del archivo : ticketRepository.js
+ * Autores            : Abraham Eduardo Quintana García, Cristian Eduardo Arreola Valenzuela
+ * Descripción        : Se encarga de establecer los metodos necesarios para interactuar con la base de datos de osticket.
+ * Última modificación: 2025-05-12
+ * ===============================================================
+ */
+
+const db = require('../config/db'); 
 const { sendMessage } = require('../config/rabbitmq');
 
+/**
+ * Método que se encarga de obtener los eventos pendientes que no han sido atendidos.
+ * @returns {Array<<Object>>} Un arreglo de objetos donde se incluyen los datos de los eventos que no han sido atendidos.
+ */
 const obtenerEventosPendientes = async () => {
     console.log("🔍 Realizando consulta a la base de datos para buscar eventos pendientes...");
     const [rows] = await db.pool.query(`
@@ -11,12 +24,20 @@ const obtenerEventosPendientes = async () => {
     return rows;
 };
 
-
+/**
+ * Método que se encarga de eliminar los eventos que ya han sido atendidos.
+ * @param {int} id - Id del evento que ya se atendio.
+ */
 const marcarEventoComoProcesado = async (id) => {
     await db.pool.query("DELETE FROM ticket_eventos WHERE ticket_id = ?", [id]); // 🔴 Cambié db.query → db.pool.query
     console.log(`✅ Evento con ID ${id} atendido correctamente.`);
 };
 
+/**
+ * Método que se encarga de obtener la información de un ticket gracias a su id.
+ * @param {int} ticket_id - Id del ticket que se quiere consultar.
+ * @returns {Object} Objeto que incluye la información que se queria obtener del ticket.
+ */
 const obtenerTicketPorId = async (ticket_id) => {
     const [rows] = await db.pool.query(`
         SELECT 
@@ -49,6 +70,10 @@ const obtenerTicketPorId = async (ticket_id) => {
     return rows.length > 0 ? rows[0] : null;
 };
 
+/**
+ * Método que se encarga de procesar los eventos pendientes.
+ * @returns {Promise<Void>}
+ */
 const procesarEventosPendientes = async () => {
     const eventos = await obtenerEventosPendientes();
 

@@ -1,13 +1,30 @@
+/**
+ * ===============================================================
+ * Nombre del archivo : solicitudController.js
+ * Autores            : Abraham Eduardo Quintana García, Cristian Eduardo Arreola Valenzuela
+ * Descripción        : Contiene metodos para manejar las peticiones relacionadas con las solicitudes.
+ * Última modificación: 2025-05-12
+ * ===============================================================
+ */
+
 const Solicitud = require('../models/solicitudModel');
-const { obtenerCorreoSupervisor } = require('../repositories/contactoRepository');
 const { actualizarServiceTag, obtenerServiceTagPorClave, crearSolicitud, obtenerTodasLasSolicitudes, actualizarEstadoEnBD, obtenerSolicitudPorClave, obtenerHistorialDeSolicitud, cancelarSolicitudEnBD, obtenerTiposEquipo } = require('../repositories/solicitudRepository');
 const sendEmail = require('../services/emailService');
 const { finalizarSolicitudConCorreo, cambiarEstadoSolicitud, cancelarSolicitud, enviarCorreoEncargado, obtenerEtapasValidasPorEquipo } = require('../services/solicitudService');
 const crypto = require('crypto');
 
-// Función para generar un Tracking ID único
+/**
+ * Función para generar la clave de rastreo única e irrepetible.
+ * @returns {string} Clave de rastreo generada.
+ */
 const generarTrackingId = () => crypto.randomBytes(6).toString('hex').toUpperCase();
 
+/**
+ * Método que se encarga de llamar al metodo necesario para crear una nueva solicitud y enviar los correos necesarios.
+ * @param {import('express').Request} req - Objeto de solicitud HTTP que contiene los datos de la solicitud necesarios para crearla.
+ * @param {import('express').Response} res - Objeto de respuesta HTTP que regresa el resultado obtenido.
+ * @returns {Promise<void>} 
+ */
 const crearNuevaSolicitud = async (req, res) => {
     try {
         const { ticket_id, numero_ticket, usuario, email, resolutor, topico, departamento, equipo_id } = req.body;
@@ -40,6 +57,12 @@ const crearNuevaSolicitud = async (req, res) => {
     }
 };
 
+/**
+ * Método que se encarga de llamar a los métodos necesarios para finalizar una solicitud.
+ * @param {import('express').Request} req - Objeto de solicitud HTTP que contiene los datos de la solicitud necesarios para finalizarla.
+ * @param {import('express').Response} res - Objeto de respuesta HTTP que regresa el resultado obtenido.
+ * @returns {Promise<void>} 
+ */
 const finalizarSolicitud = async (req, res) => {
     try {
         const { clave_rastreo } = req.params;
@@ -62,6 +85,12 @@ const finalizarSolicitud = async (req, res) => {
     }
 };
 
+/**
+ * Método que se encarga de llamar al método necesario para obtener las solicitudes activas.
+ * @param {import('express').Request} req - Objeto de solicitud HTTP.
+ * @param {import('express').Response} res - Objeto de respuesta HTTP que regresa las solicitudes encontradas en formato JSON..
+ * @returns {Promise<void>} 
+ */
 const obtenerSolicitudes = async (req, res) => {
     try {
         const solicitudes = await obtenerTodasLasSolicitudes();
@@ -78,6 +107,12 @@ const obtenerSolicitudes = async (req, res) => {
     }
 };
 
+/**
+ * Función que se encarga de llamar a los métodos necesarios para obtener el historial de seguimiento de una solicitud.
+ * @param {import('express').Request} req - Objeto de solicitud HTTP que contiene la clave de rastreo de la solicitud.
+ * @param {import('express').Response} res - Objeto de respuesta HTTP que regresa las solicitudes encontradas.
+ * @returns {Promise<void>} 
+ */
 const obtenerSeguimiento = async (req, res) => {
     try {
         const { clave_rastreo } = req.params;
@@ -109,6 +144,12 @@ const obtenerSeguimiento = async (req, res) => {
     }
 };
 
+/**
+ * Función que se encarga de manejar la lógica de las respuestas a los correos automatizados enviados.
+ * @param {import('express').Request} req - Objeto de solicitud HTTP que contiene la clave de rastreo de la solicitud y la respuesta obtenida.
+ * @param {import('express').Response} res - Objeto de respuesta HTTP que regresa el resultado obtenido.
+ * @returns {Promise<void>} 
+ */
 const procesarRespuestaCorreo = async (req, res) => {
     try {
         const { clave_rastreo, respuesta } = req.query;
@@ -140,6 +181,12 @@ const procesarRespuestaCorreo = async (req, res) => {
     }
 };
 
+/**
+ * Función que se encarga de llamar a los métodos necesarios para actualizar el estado de una solicitud.
+ * @param {import('express').Request} req - Objeto de solicitud HTTP que contiene la clave de rastreo de la solicitud.
+ * @param {import('express').Response} res - Objeto de respuesta HTTP que regresa el resultado obtenido.
+ * @returns {Promise<void>} 
+ */
 const actualizarEstado = async (req, res) => {
     try {
         const { clave_rastreo } = req.params;
@@ -161,6 +208,12 @@ const actualizarEstado = async (req, res) => {
     }
 };
 
+/**
+ * Función que se encarga de llamar al método apropiado para cancelar una solicitud.
+ * @param {import('express').Request} req - Objeto de solicitud HTTP que contiene la clave de rastreo de la solicitud.
+ * @param {import('express').Response} res - Objeto de respuesta HTTP que regresa el resultado obtenido.
+ * @returns {Promise<void>} 
+ */
 const cancelar = async (req, res) => {
     try {
         const { clave_rastreo } = req.params;
@@ -182,7 +235,11 @@ const cancelar = async (req, res) => {
     }
 };
 
-
+/**
+ * Función que se encarga de obtener los tipos de equipo que se encuentran registrados actualmente.
+ * @param {import('express').Request} req - Objeto de solicitud HTTP.
+ * @param {import('express').Response} res - Objeto de respuesta HTTP que regresa los equipos obtenidos en formato JSON.
+ */
 const getTiposEquipo = async (req, res) => {
     try {
         const tipos = await obtenerTiposEquipo();
@@ -193,7 +250,12 @@ const getTiposEquipo = async (req, res) => {
     }
 };
 
-// Actualizar el Service Tag
+/**
+ * Función que llama al método apropiado para registrar el service tag en una solicitud existente.
+ * @param {import('express').Request} req - Objeto de solicitud HTTP que contiene la clave de rastreo de la solicitud y el service tag.
+ * @param {import('express').Response} res - Objeto de respuesta HTTP que regresa el resultado obtenido.
+ * @returns {Promise<void>} 
+ */
 const actualizarServiceTagController = async (req, res) => {
     const { clave_rastreo } = req.params;
     const { service_tag } = req.body;
@@ -214,7 +276,12 @@ const actualizarServiceTagController = async (req, res) => {
     }
 };
 
-// Obtener el Service Tag
+/**
+ * Función que se encarga de llamar al método para obtener el service tag que tiene registrado una solicitud.
+ * @param {import('express').Request} req - Objeto de solicitud HTTP que contiene la clave de rastreo de la solicitud.
+ * @param {import('express').Response} res - Objeto de respuesta HTTP que regresa el service tag de la solicitud en formato JSON.
+ * @returns {Promise<void>} 
+ */
 const obtenerServiceTagController = async (req, res) => {
     const { clave_rastreo } = req.params;
 
@@ -229,7 +296,6 @@ const obtenerServiceTagController = async (req, res) => {
         return res.status(500).json({ error: "Error al obtener el Service Tag." });
     }
 };
-
 
 module.exports = { finalizarSolicitud, actualizarServiceTagController, obtenerServiceTagController, crearNuevaSolicitud, obtenerSolicitudes, obtenerSeguimiento, procesarRespuestaCorreo, actualizarEstado, cancelar, getTiposEquipo };
 

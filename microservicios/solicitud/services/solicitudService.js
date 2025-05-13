@@ -1,8 +1,20 @@
-const { obtenerSolicitudPorClave, actualizarEstadoEnBD, cancelarSolicitudEnBD, obtenerEtapasPorEquipo } = require('../repositories/solicitudRepository');
+/**
+ * ===============================================================
+ * Nombre del archivo : solicitudService.js
+ * Autores            : Abraham Eduardo Quintana García, Cristian Eduardo Arreola Valenzuela
+ * Descripción        : Establece los métodos y la lógica necesaria para manejar las operaciones relacionadas a las solicitudes.
+ * Última modificación: 2025-05-12
+ * ===============================================================
+ */
+
+const { obtenerSolicitudPorClave, actualizarEstadoEnBD, obtenerEtapasPorEquipo } = require('../repositories/solicitudRepository');
 const sendEmail = require('./emailService');
+const path = require("path");
 
 /**
- * Devuelve las etapas válidas asociadas a un equipo.
+ * Método que se encarga de obtener las etapas validas para un equipo en especifico.
+ * @param {int} id_equipo - Id perteneciente al equipo sobre el cual se desean averiguar sus etapas.
+ * @returns {Array<<Object>>} Un arreglo que incluye las etapas que pertenecen al equipo especificado.
  */
 const obtenerEtapasValidasPorEquipo = async (id_equipo) => {
     const etapas = await obtenerEtapasPorEquipo(id_equipo);
@@ -11,7 +23,10 @@ const obtenerEtapasValidasPorEquipo = async (id_equipo) => {
 };
 
 /**
- * Genera y envía un correo de autorización al encargado de una etapa.
+ * Método que se encarga de enviar el correo al encargado de la etapa siguiente.
+ * @param {int} etapa - Etapa siguiente.
+ * @param {string} clave_rastreo - Clave de rastreo de la solicitud.
+ * @returns {Promise<void>}
  */
 const enviarCorreoEncargado = async (etapa, clave_rastreo) => {
     if (!etapa?.correo_encargado || !etapa?.nombre_encargado) {
@@ -29,7 +44,13 @@ const enviarCorreoEncargado = async (etapa, clave_rastreo) => {
 };
 
 /**
- * Construye el cuerpo del email en HTML.
+ * Método que se encarga de juntar las partes del email que se enviara al encargado de autorizar el cambio de estado.
+ * @param {string} nombreEncargado - Nombre del encargado de la siguiente etapa.
+ * @param {string} nombreEtapa - Nombre de la siguiente etapa de la solicitud.
+ * @param {string} clave_rastreo - Clave de rastreo de la solicitud.
+ * @param {string} enlaceAprobar - Enlace para poder aprobar el cambio de estado.
+ * @param {string} enlaceRechazar - Enlace para poder cancelar la solicitud.
+ * @returns {string} El correo que se enviara al encargado de autorizar la actualización al siguiente estado.
  */
 const generarEmailAutorizacion = (nombreEncargado, nombreEtapa, clave_rastreo, enlaceAprobar, enlaceRechazar) => {
     return `
@@ -54,7 +75,9 @@ const generarEmailAutorizacion = (nombreEncargado, nombreEtapa, clave_rastreo, e
 };
 
 /**
- * Cambia el estado de una solicitud a la siguiente etapa.
+ * Método que se encarga de manejar la lógica necesaria para poder cambiar el estado de una solicitud.
+ * @param {string} clave_rastreo - Clave de rastreo de la solicitud a actualizar.
+ * @returns {Object} Objeto que contiene el resultado obtenido al intentar cambiar el estado de la solicitud.
  */
 const cambiarEstadoSolicitud = async (clave_rastreo) => {
     const solicitud = await obtenerSolicitudPorClave(clave_rastreo);
@@ -68,7 +91,7 @@ const cambiarEstadoSolicitud = async (clave_rastreo) => {
 
     const indiceActual = etapas.findIndex(e => e.id_etapa === id_etapa);
     if (indiceActual === -1) return { exito: false, mensaje: "Etapa actual no válida." };
-    
+
     // ❌ Ya está en la última etapa
     if (indiceActual === etapas.length - 2) {
         return { exito: false, mensaje: "La solicitud ya se encuentra en la última etapa." };
@@ -94,7 +117,9 @@ const cambiarEstadoSolicitud = async (clave_rastreo) => {
 };
 
 /**
- * Cancela una solicitud.
+ * Método que se encarga de cancelar una solicitud.
+ * @param {string} clave_rastreo - Clave de rastreo de la solicitud que se desea cancelar.
+ * @returns {Object} Objeto que contiene el resultado obtenido al intentar cancelar la solicitud.
  */
 const cancelarSolicitud = async (clave_rastreo) => {
     const solicitud = await obtenerSolicitudPorClave(clave_rastreo);
@@ -128,6 +153,14 @@ const cancelarSolicitud = async (clave_rastreo) => {
     return { exito: false, mensaje: "Error al cancelar la solicitud" };
 };
 
+/**
+ * Método que se encarga de manejar toda la lógica necesaria para poder finalizar una solicitud.
+ * @param {string} clave_rastreo - Clave de rastreo de la solicitud a finalizar.
+ * @param {string} correoEmpleado - Correo del empleado a quien se le enviara el correo.
+ * @param {string} imagenCarta - Ruta de la imagen de la carta compromiso que se enviara.
+ * @param {string} nombre - Nombre del empleado.
+ * @returns {Object} Objeto con el resultado obtenido al intentar finalizar la solicitud.
+ */
 const finalizarSolicitudConCorreo = async (clave_rastreo, correoEmpleado, imagenCarta, nombre) => {
     const actualizado = await cambiarEstadoSolicitud(clave_rastreo);
 
@@ -135,16 +168,34 @@ const finalizarSolicitudConCorreo = async (clave_rastreo, correoEmpleado, imagen
         return { exito: false, mensaje: "No se pudo finalizar la solicitud." };
     }
 
-    imagenCarta = imagenCarta + ".jpg";
+    const nombreImagen = imagenCarta + ".jpg";
+
+    // Ruta absoluta al archivo, ajusta si está en otra carpeta
+    const rutaImagen = path.resolve(__dirname, "../../../images", imagenCarta + ".jpg");
+
+    // HTML del mensaje con referencia CID
     const mensaje = `
         <p>Hola ${nombre},</p>
         <p>Tu solicitud con clave <strong>${clave_rastreo}</strong> ha sido <strong>finalizada</strong>.</p>
         <p>Adjunto encontrarás la carta compromiso.</p>
         <p>Saludos,<br>Equipo de Soporte Técnico</p>
-        <img src="${imagenCarta}" style="max-width:600px; margin-top:20px;" alt="Carta compromiso" />
+        <img src="cid:carta_compromiso" style="max-width:600px; margin-top:20px;" alt="Carta compromiso" />
     `;
 
-    await sendEmail(correoEmpleado, "Finalización de solicitud y carta compromiso", mensaje, true);
+    // Envío del correo con la imagen embebida
+    await sendEmail(
+        correoEmpleado,
+        "Finalización de solicitud y carta compromiso",
+        mensaje,
+        true,
+        [
+            {
+                filename: nombreImagen,
+                path: rutaImagen,
+                cid: "carta_compromiso"
+            }
+        ]
+    );
 
     return { exito: true };
 };

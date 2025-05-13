@@ -1,5 +1,21 @@
+/**
+ * ===============================================================
+ * Nombre del archivo : authMiddleware.js
+ * Autores            : Abraham Eduardo Quintana García, Cristian Eduardo Arreola Valenzuela
+ * Descripción        : Autenticador que se utiliza para mejorar la seguridad al momento de iniciar sesion.
+ * Última modificación: 2025-05-12
+ * ===============================================================
+ */
+
 const jwt = require('jsonwebtoken');
 
+/**
+ * Middleware que verifica la validez del token JWT en la cabecera de autorización.
+ * @param {import('express').Request} req - Objeto de solicitud HTTP que contiene el encabezado.
+ * @param {import('express').Response} res - Objeto de respuesta HTTP que regresa el resultado obtenido.
+ * @param {import('express').NextFunction} next - Función para pasar al siguiente middleware.
+ * @returns {void}
+ */
 function verificarToken(req, res, next) {
     const token = req.header('Authorization');
 

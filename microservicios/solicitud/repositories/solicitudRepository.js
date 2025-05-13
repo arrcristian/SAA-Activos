@@ -1,12 +1,24 @@
+/**
+ * ===============================================================
+ * Nombre del archivo : solicitudRepository.js
+ * Autores            : Abraham Eduardo Quintana García, Cristian Eduardo Arreola Valenzuela
+ * Descripción        : Contiene los metodos necesarios para interactuar con la base de datos de solicitudes.
+ * Última modificación: 2025-05-12
+ * ===============================================================
+ */
+
 const pool = require('../config/db');
 
+/**
+ * Método que se encarga de guardar una nueva solicitud en la base de datos.
+ * @param {Object} param0 - Objeto de tipo Solicitud que contiene toda la información necesaria para un nuevo registro en la base de datos.
+ * @returns {boolean} True si se creo una nueva solicitud, False en caso contrario.
+ */
 const crearSolicitud = async ({ tracking_id, ticket_id, usuario, email, resolutor, topico, departamento, equipo_id }) => {
-
     const connection = await pool.getConnection();
     try {
         await connection.beginTransaction();
 
-        // Obtener la primera etapa del proceso correspondiente al equipo
         const [etapaInicial] = await connection.query(`
             SELECT e.id_etapa 
             FROM etapas e
@@ -22,7 +34,6 @@ const crearSolicitud = async ({ tracking_id, ticket_id, usuario, email, resoluto
 
         const id_etapa = etapaInicial[0].id_etapa;
 
-        // Insertar en la tabla de solicitudes
         const [result] = await connection.query(`
             INSERT INTO solicitudes 
                 (clave_rastreo, ticket_id, usuario, email, resolutor, topico, departamento, id_equipo, id_etapa, fecha_creacion)
@@ -40,7 +51,6 @@ const crearSolicitud = async ({ tracking_id, ticket_id, usuario, email, resoluto
         ]);
 
         if (result.affectedRows > 0) {
-            // Insertar estado inicial en historial_estados
             await connection.query(`
                 INSERT INTO historial_estados (clave_rastreo, id_etapa) 
                 VALUES (?, ?)
@@ -58,7 +68,10 @@ const crearSolicitud = async ({ tracking_id, ticket_id, usuario, email, resoluto
     }
 };
 
-
+/**
+ * Método que se encarga de obtener todas las solicitudes activas de la base de datos.
+ * @returns {Array<<Object>>} Un arreglo de objetos con la informacion de cada solicitud.
+ */
 const obtenerTodasLasSolicitudes = async () => {
     try {
         const [rows] = await pool.query(`
@@ -82,6 +95,11 @@ const obtenerTodasLasSolicitudes = async () => {
     }
 };
 
+/**
+ * Método que se encarga de obtener una solicitud con una clave de rastreo especifica.
+ * @param {string} clave_rastreo - Clave de rastreo de la solicitud que se busca obtener.
+ * @returns {Object} Objeto que contiene la información de la solicitud con la clave de rastreo especificada.
+ */
 const obtenerSolicitudPorClave = async (clave_rastreo) => {
     try {
         const [rows] = await pool.query(`
@@ -106,6 +124,12 @@ const obtenerSolicitudPorClave = async (clave_rastreo) => {
     }
 };
 
+/**
+ * Método que se encarga de actualizar el estado de una solicitud en la base de datos.
+ * @param {string} clave_rastreo - Clave de rastreo de la solicitud que se desea actualizar.
+ * @param {int} id_etapa - Id de la etapa siguiente a la que hay que actualizar.
+ * @returns {boolean} True si la actualización se realizó con éxito, False en caso contrario.
+ */
 const actualizarEstadoEnBD = async (clave_rastreo, id_etapa) => {
     const connection = await pool.getConnection();
     try {
@@ -135,6 +159,11 @@ const actualizarEstadoEnBD = async (clave_rastreo, id_etapa) => {
     }
 };
 
+/**
+ * Método que se encarga de obtener las etapas del proceso que pertenecen a un equipo en especifico.
+ * @param {int} id_equipo - Id del equipo sobre el cual se quiere averiguar que etapas son por las que pasa.
+ * @returns {Array<<Object>>} Arreglo que incluye las etapas que conciernen al equipo especificado.
+ */
 const obtenerEtapasPorEquipo = async (id_equipo) => {
     try {
         const query = `
@@ -154,6 +183,11 @@ const obtenerEtapasPorEquipo = async (id_equipo) => {
     }
 };
 
+/**
+ * Método que se encarga de obtener el historial de cambios de una solicitud de la base de datos.
+ * @param {string} clave_rastreo - Clave de rastreo de la solicitud sobre la que se quiere obtener su historial de actualizaciones.
+ * @returns {Array<<Object>>} Arreglo con todas las actualizaciones que se le han realizado a la solicitud.
+ */
 const obtenerHistorialDeSolicitud = async (clave_rastreo) => {
     const connection = await pool.getConnection();
     try {
@@ -174,7 +208,11 @@ const obtenerHistorialDeSolicitud = async (clave_rastreo) => {
     }
 };
 
-
+/**
+ * Método que se encarga de cancelar una solicitud especifica en la base de datos.
+ * @param {*} clave_rastreo - Clave de rastreo de la solicitud que se quiere cancelar.
+ * @returns {boolean} True en caso de que la cancelación se realizó con éxito, False en caso contrario.
+ */
 const cancelarSolicitudEnBD = async (clave_rastreo) => {
     try {
         const [result] = await pool.query(`
@@ -190,6 +228,11 @@ const cancelarSolicitudEnBD = async (clave_rastreo) => {
     }
 };
 
+/**
+ * Método que se encarga de obtener el id de un equipo especifico usando su nombre.
+ * @param {string} nombre_equipo Nombre del equipo del cual se desea conocer su id.
+ * @returns {int} El id perteneciente al equipo con el nombre especificado.
+ */
 const obtenerEquipos = async (nombre_equipo) => {
     try {
         const query = `
@@ -206,6 +249,10 @@ const obtenerEquipos = async (nombre_equipo) => {
     }
 };
 
+/**
+ * Método que se encarga de obtener los diferentes tipos de equipos registrados.
+ * @returns {map<<Object>>} Mapa con los diferentes tipos de equipos obtenidos.
+ */
 const obtenerTiposEquipo = async () => {
     try {
         const query = `
@@ -220,6 +267,12 @@ const obtenerTiposEquipo = async () => {
     }
 };
 
+/**
+ * Método que se encarga de actualizar una solicitud para registrar un service tag.
+ * @param {string} clave_rastreo - Clave de rastreo de la solicitud a actualizar.
+ * @param {string} service_tag - Service Tag que se quiere registrar en la solicitud.
+ * @returns {boolean} True en caso de que se haya hecho la actualización con éxito, False en caso contrario.
+ */
 const actualizarServiceTag = async (clave_rastreo, service_tag) => {
     try {
         const [result] = await pool.query(`
@@ -235,6 +288,11 @@ const actualizarServiceTag = async (clave_rastreo, service_tag) => {
     }
 };
 
+/**
+ * Método que se encarga de obtener el service tag de una solicitud con ayuda de su clave de rastreo.
+ * @param {string} clave_rastreo - Clave de rastreo de la solcitud.
+ * @returns {string} El service tag de la solicitud con la clave de rastreo especificada.
+ */
 const obtenerServiceTagPorClave = async (clave_rastreo) => {
     try {
         const [rows] = await pool.query(`

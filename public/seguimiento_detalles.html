@@ -1,80 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalles de Solicitud</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            margin: 0;
-            background-color: #f4f4f4;
-        }
-
-        nav {
-            width: 100%;
-            background-color: #007bff;
-            padding: 10px 20px;
-            box-sizing: border-box;
-        }
-
-        nav button {
-            background-color: white;
-            color: #007bff;
-            font-weight: bold;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .main-content {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: calc(100vh - 60px);
-            /* ajusta según la altura del nav */
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .details-container {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 500px;
-            text-align: center;
-        }
-
-        h2 {
-            font-size: 24px;
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        p {
-            font-size: 16px;
-            margin: 5px 0;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f8f8f8;
-        }
-    </style>
+    <link rel="stylesheet" href="css/seguimiento_detalles.css">
 </head>
 
 <body>
@@ -83,91 +14,32 @@
     </nav>
 
     <div class="main-content">
-    <div class="details-container">
-        <h2>Detalles de la Solicitud</h2>
-        <p><strong>Clave de Rastreo:</strong> <span id="ticket_id"></span></p>
-        <p><strong>Usuario:</strong> <span id="usuario"></span></p>
-        <p><strong>Resolutor:</strong> <span id="resolutor"></span></p>
-        <p><strong>Fecha de creación:</strong> <span id="fecha_creacion"></span></p>
-        <p><strong>Tipo de equipo:</strong> <span id="tipo_equipo"></span></p>
-        <p><strong>Estado Actual:</strong> <span id="estado_actual"></span></p>
-        <h3>Historial de Seguimiento</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Descripción</th>
-                    <th>Fecha</th>
-                </tr>
-            </thead>
-            <tbody id="historial"></tbody>
-        </table>
+        <div class="details-container">
+            <h2>Detalles de la Solicitud</h2>
+            <p><strong>Clave de Rastreo:</strong> <span id="ticket_id"></span></p>
+            <p><strong>Usuario:</strong> <span id="usuario"></span></p>
+            <p><strong>Resolutor:</strong> <span id="resolutor"></span></p>
+            <p><strong>Fecha de creación:</strong> <span id="fecha_creacion"></span></p>
+            <p><strong>Tipo de equipo:</strong> <span id="tipo_equipo"></span></p>
+            <p><strong>Estado Actual:</strong> <span id="estado_actual"></span></p>
+            <h3>Historial de Seguimiento</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Descripción</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody id="historial"></tbody>
+            </table>
+        </div>
     </div>
-    </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", async () => {
-                const urlParams = new URLSearchParams(window.location.search);
-                const claveRastreo = urlParams.get("clave");
+    <footer style="text-align:center; font-size:0.8em; color:gray; padding:10px;">
+        <p>Desarrollado por Abraham Eduardo Quintana García y Cristian Eduardo Arreola Valenzuela - 2025</p>
+    </footer>
 
-                if (!claveRastreo || claveRastreo.trim() === "") {
-                    alert("Clave de rastreo no proporcionada.");
-                    window.location.href = "seguimiento.html";
-                    return;
-                }
-    
-            try {
-                const response = await fetch(`http://localhost:4000/api/solicitudes/seguimiento/${claveRastreo}`);
-                const data = await response.json();
-    
-                if (!response.ok) throw new Error(data.error || "Error al obtener la solicitud");
-    
-                // Insertar datos en la página
-                document.getElementById("ticket_id").textContent = claveRastreo;
-                document.getElementById("usuario").textContent = data.usuario;
-                document.getElementById("resolutor").textContent = data.resolutor;
-                document.getElementById("fecha_creacion").textContent = formatearFecha(data.fecha_creacion);
-                document.getElementById("tipo_equipo").textContent = data.tipo_equipo || "No especificado";
+    <script src="js/seguimiento_detalles.js" defer></script>
+</body>
 
-                
-                const historial = data.historial;
-                if (historial && historial.length > 0) {
-                    const ultimaEtapa = historial[historial.length - 1];
-                    document.getElementById("estado_actual").textContent = ultimaEtapa.nombre_etapa || "Sin estado";
-                } else {
-                    document.getElementById("estado_actual").textContent = "Sin historial";
-                }
-    
-                // Llenar historial
-                const historialContainer = document.getElementById("historial");
-                historialContainer.innerHTML = ""; // Limpiar contenido anterior
-                console.log("Historial recibido:", data.historial);
-                data.historial.forEach(actualizacion => {
-                    const fechaFormateada = formatearFecha(actualizacion.fecha_cambio);
-                    const row = document.createElement("tr");
-                    row.innerHTML = `<td>${actualizacion.nombre_etapa}</td><td>${fechaFormateada}</td>`;
-                    historialContainer.appendChild(row);
-                });
-    
-            } catch (error) {
-                console.error("❌ Error al cargar detalles:", error);
-                alert("Error al obtener la solicitud. Intente nuevamente.");
-                window.location.href = "seguimiento.html";
-            }
-        });
-    
-        function formatearFecha(fechaISO) {
-            if (!fechaISO) return "Fecha no disponible";
-    
-            const fecha = new Date(fechaISO);
-            const dia = String(fecha.getDate()).padStart(2, "0");
-            const mes = String(fecha.getMonth() + 1).padStart(2, "0");
-            const año = fecha.getFullYear();
-            const horas = String(fecha.getHours()).padStart(2, "0");
-            const minutos = String(fecha.getMinutes()).padStart(2, "0");
-    
-            return `${dia}/${mes}/${año} | ${horas}:${minutos}`;
-        }
-    </script>
-    </body>
-    
-    </html>
+</html>

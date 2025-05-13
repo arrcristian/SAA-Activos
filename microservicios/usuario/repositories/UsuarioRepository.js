@@ -1,7 +1,23 @@
+/**
+ * ===============================================================
+ * Nombre del archivo : UsuarioRepository.js
+ * Autores            : Abraham Eduardo Quintana García, Cristian Eduardo Arreola Valenzuela
+ * Descripción        : Maneja toda la logica necesaria para interactuar con la base de datos.
+ * Última modificación: 2025-05-12
+ * ===============================================================
+ */
+
 const pool = require('../config/dbConfig');
 const bcrypt = require('bcrypt');
 
+/**
+ * Clase que contiene los metodos necesarios para interactuar con la base de datos.
+ */
 class UsuarioRepository {
+    /**
+     * Método que obtiene todos los usuarios.
+     * @returns {Array<<Object>>} Arreglo que devuelve todos los usuarios.
+     */
     async obtenerTodosLosUsuarios() {
         let connection;
         try {
@@ -16,6 +32,11 @@ class UsuarioRepository {
         }
     }
 
+    /**
+     * Método que permite obtener un usuario por su nombre de usuario.
+     * @param {string} usuario - Nombre de usuario.
+     * @returns {Object} Objeto que contiene toda la informacion del usuario encontrado.
+     */
     async obtenerUsuarioPorUsuario(usuario) {
         let connection;
         try {
@@ -34,34 +55,12 @@ class UsuarioRepository {
         }
     }
 
-
-    /*async obtenerUsuarioPorCorreo(correo) {
-        let connection;
-        try {
-            connection = await pool.getConnection();
-            const [rows] = await connection.execute('SELECT * FROM usuarios WHERE correo = ?', [correo]);
-            return rows.length > 0 ? rows[0] : null;
-        } catch (error) {
-            console.error('Error al obtener usuario por correo:', error);
-            throw error;
-        } finally {
-            if (connection) connection.release();
-        }
-    } 
-
-    async obtenerUsuarioPorId(id) {
-        let connection;
-        try {
-            connection = await pool.getConnection();
-            const [rows] = await connection.execute('SELECT * FROM usuarios WHERE id = ?', [id]);
-            return rows.length > 0 ? rows[0] : null;
-        } catch (error) {
-            console.error('Error al obtener usuario por ID:', error);
-            throw error;
-        } finally {
-            if (connection) connection.release();
-        }
-    } */
+    /**
+     * Método que permite actualizar el password de un usuario.
+     * @param {int} id - Id del usuario.
+     * @param {string} nuevaContrasena - Nuevo password del usuario.
+     * @returns {boolean} True si se actualizo con exito, False en caso contrario.
+     */
     async actualizarContrasena(id, nuevaContrasena) {
         let connection;
         try {
@@ -76,52 +75,6 @@ class UsuarioRepository {
             if (connection) connection.release();
         }
     }
-
-    /*async aumentarIntentoFallido(id) {
-        let connection;
-        try {
-            connection = await pool.getConnection();
-            await connection.execute(
-                'UPDATE usuarios SET intentos_fallidos = intentos_fallidos + 1 WHERE id = ?',
-                [id]
-            );
-        } catch (error) {
-            console.error('Error al aumentar intentos fallidos:', error);
-            throw error;
-        } finally {
-            if (connection) connection.release();
-        }
-    }*/
-
-    /*async bloquearUsuario(id) {
-        let connection;
-        try {
-            connection = await pool.getConnection();
-            const bloqueoHasta = new Date(Date.now() + 5 * 60 * 1000); // Bloquear por 5 minutos
-            await connection.execute(
-                'UPDATE usuarios SET bloqueado_hasta = ?, intentos_fallidos = 0 WHERE id = ?',
-                [bloqueoHasta, id]
-            );
-        } catch (error) {
-            console.error('Error al bloquear usuario:', error);
-            throw error;
-        } finally {
-            if (connection) connection.release();
-        }
-    } */
-
-    /*async resetearIntentosFallidos(id) {
-        let connection;
-        try {
-            connection = await pool.getConnection();
-            await connection.execute('UPDATE usuarios SET intentos_fallidos = 0 WHERE id = ?', [id]);
-        } catch (error) {
-            console.error('Error al resetear intentos fallidos:', error);
-            throw error;
-        } finally {
-            if (connection) connection.release();
-        }
-    } */
 }
 
 module.exports = new UsuarioRepository();

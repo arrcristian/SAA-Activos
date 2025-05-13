@@ -1,166 +1,32 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión</title>
-    <style>
-        body {
-    font-family: 'Arial', sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: #f4f4f4;
-    margin: 0;
-}
-
-.login-container {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 350px;
-    text-align: center;
-}
-
-h2 {
-    font-size: 24px;
-    margin-bottom: 20px;
-    color: #333;
-}
-
-input {
-    width: calc(100% - 20px);
-    padding: 12px;
-    margin: 8px 0;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-sizing: border-box;
-    font-size: 16px;
-}
-
-button {
-    width: 100%;
-    padding: 12px;
-    background: #28a745;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background 0.3s ease;
-    margin-top: 15px;
-}
-
-button:hover {
-    background: #218838;
-}
-
-.error {
-    color: red;
-    font-size: 14px;
-    margin-top: 10px;
-}
-
-.forgot-password {
-    display: block;
-    margin-top: 15px;
-    font-size: 14px;
-    color: #6a0dad;
-    text-decoration: none;
-    transition: color 0.3s ease;
-}
-
-.forgot-password:hover {
-    color: #4a0874;
-}
-
-
-    </style>
+    <link rel="stylesheet" href="css/login.css">
 </head>
-<body>
-    
 
-    <div class="login-container">
-        <h2>Iniciar Sesión</h2>
-        <form id="loginForm">
-            <input type="text" id="usuario" placeholder="Usuario" required>
-            <input type="password" id="contrasena" placeholder="Contraseña" required>
-            <button type="submit">Iniciar Sesión</button>
-        </form>
-        <p id="mensaje" class="error"></p>
+<body>
+
+    <div class="page-wrapper">
+        <div class="login-container">
+            <h2>Iniciar Sesión</h2>
+            <form id="loginForm">
+                <input type="text" id="usuario" placeholder="Usuario" required>
+                <input type="password" id="contrasena" placeholder="Contraseña" required>
+                <button type="submit">Iniciar Sesión</button>
+            </form>
+            <p id="mensaje" class="error"></p>
+        </div>
     </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", async function () {
-            const token = sessionStorage.getItem("token");
-            if (!token) return;
-    
-            try {
-                const response = await fetch("http://localhost:4000/api/usuarios/perfil", {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
-    
-                if (response.ok) {
-                    // Token válido, redirigir
-                    window.location.href = "inicio.html";
-                } else {
-                    // Token inválido o expirado, limpiar sesión
-                    sessionStorage.clear();
-                }
-            } catch (error) {
-                sessionStorage.clear();
-            }
-        });
-    
-        document.getElementById("loginForm").addEventListener("submit", async function(event) {
-            event.preventDefault(); // Evita el envío del formulario por defecto
-    
-            const usuario = document.getElementById("usuario").value.trim();
-            const contrasena = document.getElementById("contrasena").value.trim();
-            const mensaje = document.getElementById("mensaje");
-    
-            mensaje.textContent = ""; // Limpia mensajes anteriores
-    
-            if (!usuario || !contrasena) {
-                mensaje.textContent = "Por favor, completa todos los campos.";
-                return;
-            }
-    
-            try {
-                const response = await fetch("http://localhost:3001/api/usuarios/login", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ usuario, contrasena })
-                });
-    
-                const data = await response.json();
-    
-                if (!response.ok) {
-                    throw new Error(data.message || "Error al iniciar sesión");
-                }
-    
-                // Guardar el token en sessionStorage
-                sessionStorage.setItem("token", data.token);
-                sessionStorage.setItem("usuario", data.usuario);
-    
-                alert("Inicio de sesión exitoso");
-    
-                // Redirigir al usuario a la página de inicio
-                window.location.href = "inicio.html"; 
-    
-            } catch (error) {
-                mensaje.textContent = error.message;
-            }
-        });
-    </script>
-    
+    <footer>
+        <p>Desarrollado por Abraham Eduardo Quintana García y Cristian Eduardo Arreola Valenzuela - 2025</p>
+    </footer>
 
+    <script src="js/login.js" defer></script>
 </body>
+
 </html>
