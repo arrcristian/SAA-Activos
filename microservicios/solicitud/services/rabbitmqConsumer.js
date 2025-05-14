@@ -89,7 +89,17 @@ const iniciarConsumidor = async () => {
 
                     if (guardado) {
                         const asuntoUsuario = "Confirmación de solicitud";
-                        const mensajeUsuario = `Hola ${usuario},\n\nTu solicitud ha sido registrada exitosamente.\n\nClave de rastreo: ${tracking_id}\n\nGracias por usar nuestro servicio.`;
+                        const enlace = `http://localhost:4005/seguimiento_detalles.html?clave=${tracking_id}`;
+                        const mensajeUsuario = `
+Hola ${usuario},
+
+Tu solicitud ha sido registrada exitosamente.
+
+Puedes consultar el estado de tu solicitud en el siguiente enlace:
+${enlace}
+
+Gracias por usar nuestro servicio.
+`;
 
                         await sendEmail(email, asuntoUsuario, mensajeUsuario, false);
                         console.log(`📩 Correo enviado a ${email} con tracking ID: ${tracking_id}`);

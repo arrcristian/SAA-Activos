@@ -13,19 +13,41 @@ const RABBITMQ_URL = 'amqp://localhost';
 const QUEUE_NAME = 'ticket_queue';
 
 let channel;
+let connection;
 
 /**
- * Método para establecer conexion con rabbitmq.
+ * Metodo que intenta conectar el microservicio con rabbitmq.
+ * @param {int} retryInterval - Intervalo de tiempo entre conexiones.
  */
-const connectRabbitMQ = async () => {
+const connectRabbitMQ = async (retryInterval = 5000) => {
     try {
-        const connection = await amqp.connect(RABBITMQ_URL);
+        connection = await amqp.connect(RABBITMQ_URL);
         channel = await connection.createChannel();
         await channel.assertQueue(QUEUE_NAME, { durable: true });
         console.log("✅ Conectado a RabbitMQ y cola creada");
+
+        connection.on('error', (err) => {
+            console.error("❌ Error en conexión RabbitMQ:", err);
+            reconnectRabbitMQ(retryInterval);
+        });
+
+        connection.on('close', () => {
+            console.warn("⚠️ Conexión con RabbitMQ cerrada. Reintentando...");
+            reconnectRabbitMQ(retryInterval);
+        });
+
     } catch (error) {
-        console.error("❌ Error conectando a RabbitMQ:", error);
+        console.error("❌ Falló la conexión a RabbitMQ:", error.message);
+        setTimeout(() => connectRabbitMQ(retryInterval), retryInterval);
     }
+};
+
+/**
+ * Metodo que intenta reconectar el microservicio a rabbitmq.
+ * @param {int} retryInterval - Intervalo entre conexiones.
+ */
+const reconnectRabbitMQ = (retryInterval) => {
+    setTimeout(() => connectRabbitMQ(retryInterval), retryInterval);
 };
 
 /**

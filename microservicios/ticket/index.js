@@ -23,16 +23,24 @@ const PORT = process.env.PORT || 3000;
  * Método que se encarga de inicializar el servidor de tickets.
  */
 const startServer = async () => {
-    await connectDatabase(); 
-    await connectRabbitMQ();
+    try {
+        await connectDatabase(); 
+        await connectRabbitMQ();
 
-    app.listen(PORT, () => console.log(`🚀 Servidor corriendo en el puerto ${PORT}`));
+        app.listen(PORT, () => console.log(`🚀 Servidor corriendo en el puerto ${PORT}`));
 
-    // 🔄 Verificar eventos en la base de datos cada 5 segundos
-    setInterval(async () => {
-        console.log("⏳ Ejecutando verificación de eventos...");
-        await procesarEventosPendientes();
-    }, 10000); // 10000 ms = 10 segundos
+        setInterval(async () => {
+            try {
+                console.log("⏳ Ejecutando verificación de eventos...");
+                await procesarEventosPendientes();
+            } catch (err) {
+                console.error("❌ Error al procesar eventos pendientes:", err);
+            }
+        }, 10000);
+
+    } catch (error) {
+        console.error("❌ Error crítico al iniciar el servidor:", error);
+    }
 };
 
 startServer();

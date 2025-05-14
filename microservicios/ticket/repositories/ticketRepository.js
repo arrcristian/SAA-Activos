@@ -7,7 +7,7 @@
  * ===============================================================
  */
 
-const db = require('../config/db'); 
+const {getPool} = require('../config/db'); 
 const { sendMessage } = require('../config/rabbitmq');
 
 /**
@@ -15,8 +15,9 @@ const { sendMessage } = require('../config/rabbitmq');
  * @returns {Array<<Object>>} Un arreglo de objetos donde se incluyen los datos de los eventos que no han sido atendidos.
  */
 const obtenerEventosPendientes = async () => {
+    const pool = getPool();
     console.log("🔍 Realizando consulta a la base de datos para buscar eventos pendientes...");
-    const [rows] = await db.pool.query(`
+    const [rows] = await pool.query(`
         SELECT ticket_id, topic_id, user_id, user_email_id, staff_id, dept_id, numero_ticket, fecha_creacion
         FROM ticket_eventos
     `);
@@ -29,7 +30,8 @@ const obtenerEventosPendientes = async () => {
  * @param {int} id - Id del evento que ya se atendio.
  */
 const marcarEventoComoProcesado = async (id) => {
-    await db.pool.query("DELETE FROM ticket_eventos WHERE ticket_id = ?", [id]); // 🔴 Cambié db.query → db.pool.query
+    const pool = getPool();
+    await pool.query("DELETE FROM ticket_eventos WHERE ticket_id = ?", [id]); // 🔴 Cambié db.query → db.pool.query
     console.log(`✅ Evento con ID ${id} atendido correctamente.`);
 };
 
@@ -39,7 +41,8 @@ const marcarEventoComoProcesado = async (id) => {
  * @returns {Object} Objeto que incluye la información que se queria obtener del ticket.
  */
 const obtenerTicketPorId = async (ticket_id) => {
-    const [rows] = await db.pool.query(`
+    const pool = getPool();
+    const [rows] = await pool.query(`
         SELECT 
             t.ticket_id,
             t.number AS numero_ticket,
