@@ -54,7 +54,7 @@ document.getElementById("loginForm").addEventListener("submit", async function (
         sessionStorage.setItem("token", data.token);
         sessionStorage.setItem("usuario", data.usuario);
 
-        alert("Inicio de sesión exitoso");
+        //alert("Inicio de sesión exitoso");
 
         // Redirigir al usuario a la página de inicio
         window.location.href = "inicio.html";

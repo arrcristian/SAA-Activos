@@ -111,9 +111,19 @@ function cerrarModalDatosEquipo() {
 }
 
 async function confirmarCambioFinal() {
+    const btnAceptar = document.getElementById("btnAceptar");
+    btnAceptar.disabled = true;
+    btnAceptar.textContent = "Procesando...";
+
     await finalizarSolicitud();
+
     cerrarModalDatosEquipo();
+
+    // (Opcional) volver a habilitar el botón si el modal se puede volver a usar
+    btnAceptar.disabled = false;
+    btnAceptar.textContent = "Aceptar";
 }
+
 
 function mostrarDatosEnModal(datos) {
     document.getElementById("campoFolio").textContent = datos.FolioImagen;
@@ -140,11 +150,11 @@ async function verificarServiceTag() {
                 return;
             }
             const datos = await response.json();
-            alert(datos.FolioImagen);
+           // alert(datos.FolioImagen);
             mostrarDatosEnModal(datos);
         } catch (error) {
             console.error("Error validando el Service Tag:", error);
-            alert("Ocurrió un error al validar el Service Tag.");
+           // alert("Ocurrió un error al validar el Service Tag.");
         }
     }
 }
@@ -168,7 +178,7 @@ async function validarYEnviarServiceTag() {
         cerrarModalServiceTag();
     } catch (error) {
         console.error("Error validando el Service Tag:", error);
-        alert("Ocurrió un error al validar el Service Tag.");
+        ///alert("Ocurrió un error al validar el Service Tag.");
     }
 }
 
@@ -188,16 +198,16 @@ async function cancelarSolicitud() {
 }
 
 async function finalizarSolicitud() {
-    //const correo = document.getElementById("campoCorreo").value;
-    const correo = "kingue2811@gmail.com";
+    const correo = document.getElementById("campoCorreo").textContent;
     const imagen = document.getElementById("campoFolio").textContent;
     const nombre_empleado = document.getElementById("campoNombre").textContent;
-    alert(nombre_empleado);
+
+    //alert(nombre_empleado);
     if (!correo || !imagen) {
         alert("Faltan datos: correo o imagen.");
         return;
     }
-    alert("LLegue a finalizar");
+    //alert("LLegue a finalizar");
     try {
         const response = await fetch(`http://localhost:4000/api/solicitudes/finalizar-solicitud/${claveRastreo}`, {
             method: "POST",
@@ -221,7 +231,7 @@ async function finalizarSolicitud() {
         cargarDetalles();
     } catch (error) {
         console.error("Error al finalizar solicitud:", error);
-        alert("Error de red al finalizar.");
+       // alert("Error de red al finalizar.");
     }
 }
 
@@ -241,7 +251,7 @@ async function enviarCambioEstado(service_tag) {
             return;
         }
 
-        alert("Estado actualizado correctamente");
+        //alert("Estado actualizado correctamente");
 
         if (service_tag != null) {
             const response2 = await fetch(`http://localhost:4000/api/solicitudes/service-tag/${claveRastreo}`, {
@@ -258,7 +268,7 @@ async function enviarCambioEstado(service_tag) {
                 return;
             }
 
-            alert("Service Tag registrado correctamente");
+            //alert("Service Tag registrado correctamente");
         }
         cargarDetalles(); // Refrescar página
     } catch (error) {
