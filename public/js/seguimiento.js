@@ -1,7 +1,12 @@
 async function consultarSeguimiento() {
     const trackingId = document.getElementById('tracking_id').value.trim();
+
     if (!trackingId) {
-        alert('Por favor, ingrese una clave de rastreo.');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Campo vacío',
+            text: 'Por favor, ingrese una clave de rastreo.'
+        });
         return;
     }
 
@@ -14,10 +19,18 @@ async function consultarSeguimiento() {
             localStorage.setItem('seguimientoData', JSON.stringify(data));
             window.location.href = `seguimiento_detalles.html?clave=${trackingId}`;
         } else {
-            alert(data.error);
+            Swal.fire({
+                icon: 'error',
+                title: 'No encontrado',
+                text: data.error || 'No se encontró la solicitud con esa clave.'
+            });
         }
     } catch (error) {
         console.error('Error al consultar:', error);
-        alert('Error al consultar el seguimiento.');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de conexión',
+            text: 'No se pudo consultar el seguimiento. Intente más tarde.'
+        });
     }
 }

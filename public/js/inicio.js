@@ -180,7 +180,11 @@ async function buscarSolicitud() {
     const clave = input.value.trim();
 
     if (!clave) {
-        alert("Ingrese una clave de rastreo.");
+        Swal.fire({
+            icon: 'warning',
+            title: 'Campo vacío',
+            text: 'Ingrese una clave de rastreo.'
+        });
         return;
     }
 
@@ -194,17 +198,28 @@ async function buscarSolicitud() {
             }
         } catch (error) {
             console.error("❌ Error al buscar solicitud en el backend:", error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Ocurrió un error al consultar la solicitud. Intente nuevamente.'
+            });
+            return;
         }
     }
 
     if (solicitud) {
         verDetalles(clave);
     } else {
-        alert("No se encontró ninguna solicitud con esa clave de rastreo.");
+        Swal.fire({
+            icon: 'error',
+            title: 'No encontrada',
+            text: 'No se encontró ninguna solicitud con esa clave de rastreo.'
+        });
     }
 
     input.value = "";
 }
+
 
 function cerrarSesion() {
     sessionStorage.removeItem("usuario");

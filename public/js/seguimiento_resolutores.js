@@ -112,17 +112,30 @@ function cerrarModalDatosEquipo() {
 
 async function confirmarCambioFinal() {
     const btnAceptar = document.getElementById("btnAceptar");
+    const btnCambiarEstado = document.getElementById("btnCambiarEstado");
+    const btnCancelar = document.getElementById("btnCancelar");
+
+    // Deshabilitar el botón "Aceptar" del modal
     btnAceptar.disabled = true;
     btnAceptar.textContent = "Procesando...";
+
+    // Deshabilitar los botones principales
+    btnCambiarEstado.disabled = true;
+    btnCancelar.disabled = true;
+    btnCambiarEstado.style.backgroundColor = "#ccc";
+    btnCancelar.style.backgroundColor = "#ccc";
+    btnCambiarEstado.style.cursor = "not-allowed";
+    btnCancelar.style.cursor = "not-allowed";
 
     await finalizarSolicitud();
 
     cerrarModalDatosEquipo();
 
-    // (Opcional) volver a habilitar el botón si el modal se puede volver a usar
-    btnAceptar.disabled = false;
-    btnAceptar.textContent = "Aceptar";
+    // Si quieres que se puedan volver a usar, descomenta las siguientes líneas:
+    // btnAceptar.disabled = false;
+    // btnAceptar.textContent = "Aceptar";
 }
+
 
 
 function mostrarDatosEnModal(datos) {
@@ -137,50 +150,93 @@ function mostrarDatosEnModal(datos) {
 }
 
 async function verificarServiceTag() {
-    const response2 = await fetch(`http://localhost:4000/api/solicitudes/service-tag/${claveRastreo}`);
-    const solicitud = await response2.json();
+    try {
+        const response2 = await fetch(`http://localhost:4000/api/solicitudes/service-tag/${claveRastreo}`);
+        const solicitud = await response2.json();
 
-    if (!response2.ok) throw new Error(solicitud.error || "Error al obtener la solicitud");
+        if (!response2.ok) throw new Error(solicitud.error || "Error al obtener la solicitud");
 
-    if (solicitud.service_tag != null) {
-        try {
-            const response = await fetch(`http://localhost:3002/api/inventario/${solicitud.service_tag}`);
-            if (!response.ok) {
-                alert("Service Tag no encontrado.");
-                return;
+        if (solicitud.service_tag != null) {
+            try {
+                const response = await fetch(`http://localhost:3002/api/inventario/${solicitud.service_tag}`);
+                if (!response.ok) {
+                    await Swal.fire({
+                        icon: 'warning',
+                        title: 'Service Tag no encontrado',
+                        text: 'No se encontró el Service Tag en el inventario.'
+                    });
+                    return;
+                }
+
+                const datos = await response.json();
+                // Mostrar los datos en un modal personalizado
+                mostrarDatosEnModal(datos);
+
+            } catch (error) {
+                console.error("Error validando el Service Tag:", error);
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error de validación',
+                    text: 'Ocurrió un error al validar el Service Tag.'
+                });
             }
-            const datos = await response.json();
-           // alert(datos.FolioImagen);
-            mostrarDatosEnModal(datos);
-        } catch (error) {
-            console.error("Error validando el Service Tag:", error);
-           // alert("Ocurrió un error al validar el Service Tag.");
         }
+    } catch (error) {
+        console.error("Error al obtener la solicitud:", error);
+        await Swal.fire({
+            icon: 'error',
+            title: 'Error de solicitud',
+            text: error.message || 'No se pudo obtener la información del service tag.'
+        });
     }
 }
 
+
 async function validarYEnviarServiceTag() {
     const serviceTag = document.getElementById("inputServiceTagModal").value.trim();
+    
     if (!serviceTag) {
-        alert("Debe ingresar un Service Tag.");
+        Swal.fire({
+            icon: 'warning',
+            title: 'Campo vacío',
+            text: 'Debe ingresar un Service Tag.'
+        });
         return;
     }
 
     try {
         const response = await fetch(`http://localhost:3002/api/inventario/${serviceTag}`);
+        
         if (!response.ok) {
-            alert("Service Tag no encontrado.");
+            Swal.fire({
+                icon: 'error',
+                title: 'No encontrado',
+                text: 'Service Tag no encontrado.'
+            });
             return;
         }
 
         // Enviar cambio de estado con el service tag
         await enviarCambioEstado(serviceTag);
+
+        // Mostrar alerta de éxito
+        Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: `El Service Tag "${serviceTag}" fue procesado correctamente.`
+        });
+
         cerrarModalServiceTag();
     } catch (error) {
         console.error("Error validando el Service Tag:", error);
-        ///alert("Ocurrió un error al validar el Service Tag.");
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Ocurrió un error al validar el Service Tag.'
+        });
     }
 }
+
 
 async function cancelarSolicitud() {
     try {
@@ -190,24 +246,39 @@ async function cancelarSolicitud() {
         });
 
         if (!response.ok) throw new Error("Error al cancelar la solicitud");
-        alert("Solicitud cancelada correctamente");
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'Solicitud cancelada',
+            text: 'La solicitud ha sido cancelada correctamente.'
+        });
+
         cargarDetalles();
     } catch (error) {
         console.error("❌ Error al cancelar solicitud:", error);
+        await Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Ocurrió un error al cancelar la solicitud.'
+        });
     }
 }
+
 
 async function finalizarSolicitud() {
     const correo = document.getElementById("campoCorreo").textContent;
     const imagen = document.getElementById("campoFolio").textContent;
     const nombre_empleado = document.getElementById("campoNombre").textContent;
 
-    //alert(nombre_empleado);
     if (!correo || !imagen) {
-        alert("Faltan datos: correo o imagen.");
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Datos incompletos',
+            text: 'Faltan datos: correo o imagen.'
+        });
         return;
     }
-    //alert("LLegue a finalizar");
+
     try {
         const response = await fetch(`http://localhost:4000/api/solicitudes/finalizar-solicitud/${claveRastreo}`, {
             method: "POST",
@@ -223,17 +294,31 @@ async function finalizarSolicitud() {
 
         const data = await response.json();
         if (!response.ok) {
-            alert(data.error || "Error al finalizar solicitud");
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.error || "Error al finalizar solicitud"
+            });
             return;
         }
 
-        alert("Solicitud finalizada y correo enviado.");
+        await Swal.fire({
+            icon: 'success',
+            title: 'Solicitud finalizada',
+            text: 'La solicitud ha sido finalizada y el correo ha sido enviado.'
+        });
+
         cargarDetalles();
     } catch (error) {
         console.error("Error al finalizar solicitud:", error);
-       // alert("Error de red al finalizar.");
+        await Swal.fire({
+            icon: 'error',
+            title: 'Error de red',
+            text: 'Ocurrió un error de red al finalizar la solicitud.'
+        });
     }
 }
+
 
 async function enviarCambioEstado(service_tag) {
     try {
@@ -247,11 +332,13 @@ async function enviarCambioEstado(service_tag) {
 
         const data = await response.json();
         if (!response.ok) {
-            alert(data.error || "Error al cambiar el estado");
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.error || "Error al cambiar el estado"
+            });
             return;
         }
-
-        //alert("Estado actualizado correctamente");
 
         if (service_tag != null) {
             const response2 = await fetch(`http://localhost:4000/api/solicitudes/service-tag/${claveRastreo}`, {
@@ -264,16 +351,30 @@ async function enviarCambioEstado(service_tag) {
 
             const data2 = await response2.json();
             if (!response2.ok) {
-                alert(data.error || "Error al cambiar el estado");
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data2.error || "Error al registrar el Service Tag"
+                });
                 return;
             }
 
-            //alert("Service Tag registrado correctamente");
+        } else {
+            await Swal.fire({
+                icon: 'success',
+                title: 'Estado actualizado',
+                text: 'El estado de la solicitud se ha actualizado correctamente.'
+            });
         }
+
         cargarDetalles(); // Refrescar página
     } catch (error) {
         console.error("Error al cambiar estado:", error);
-        alert("Error de red al cambiar el estado.");
+        await Swal.fire({
+            icon: 'error',
+            title: 'Error de red',
+            text: 'Ocurrió un error de red al cambiar el estado.'
+        });
     }
 }
 

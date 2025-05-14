@@ -3,7 +3,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const claveRastreo = urlParams.get("clave");
 
     if (!claveRastreo || claveRastreo.trim() === "") {
-        alert("Clave de rastreo no proporcionada.");
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Clave no proporcionada',
+            text: 'Debe proporcionar una clave de rastreo.'
+        });
         window.location.href = "seguimiento.html";
         return;
     }
@@ -20,7 +24,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("resolutor").textContent = data.resolutor;
         document.getElementById("fecha_creacion").textContent = formatearFecha(data.fecha_creacion);
         document.getElementById("tipo_equipo").textContent = data.tipo_equipo || "No especificado";
-
 
         const historial = data.historial;
         if (historial && historial.length > 0) {
@@ -43,7 +46,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     } catch (error) {
         console.error("❌ Error al cargar detalles:", error);
-        alert("Error al obtener la solicitud. Intente nuevamente.");
+        await Swal.fire({
+            icon: 'error',
+            title: 'Error de consulta',
+            text: 'No se pudo obtener la solicitud. Intente nuevamente.'
+        });
         window.location.href = "seguimiento.html";
     }
 });
