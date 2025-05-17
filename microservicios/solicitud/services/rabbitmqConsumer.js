@@ -13,6 +13,7 @@ const { crearSolicitud, obtenerEquipos } = require('../repositories/solicitudRep
 const { enviarCorreoEncargado, obtenerEtapasValidasPorEquipo } = require('../services/solicitudService');
 const sendEmail = require('./emailService');
 const crypto = require('crypto');
+const axios = require('axios');
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://localhost';
 const QUEUE_NAME = 'ticket_queue';
@@ -109,6 +110,16 @@ Gracias por usar nuestro servicio.
                         await enviarCorreoEncargado(etapas[1], tracking_id);
 
                         console.log(`📩 Correo enviado a supervisor con correo ${etapas[1].correo_encargado} con tracking ID: ${tracking_id}`);
+
+                        try {
+                            await axios.post('http://localhost:3000/api/tickets/responder-ticket', {
+                                ticket_id: ticket_id,
+                                clave_rastreo: tracking_id
+                            });
+                            console.log(`📝 Respuesta automática enviada al ticket ${ticket_id}`);
+                        } catch (error) {
+                            console.error(`❌ Error al responder al ticket automáticamente:`, error.message);
+                        }
                         channel.ack(msg);
                     } else {
                         console.error("❌ No se pudo crear la solicitud.");

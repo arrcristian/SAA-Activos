@@ -7,7 +7,7 @@
  * ===============================================================
  */
 
-const {getPool} = require('../config/db'); 
+const { getPool } = require('../config/db');
 const { sendMessage } = require('../config/rabbitmq');
 
 /**
@@ -67,7 +67,7 @@ const obtenerTicketPorId = async (ticket_id) => {
         JOIN ost_help_topic tp ON t.topic_id = tp.topic_id
         JOIN ost_department d ON t.dept_id = d.id
         WHERE t.ticket_id = ?
-    `, [ticket_id]);    
+    `, [ticket_id]);
 
     console.log('Se pudo obtener el ticket');
     return rows.length > 0 ? rows[0] : null;
@@ -94,10 +94,36 @@ const procesarEventosPendientes = async () => {
             console.log(`📤 Enviando ticket ${ticket.ticket_id} a la cola de RabbitMQ.`);
             await sendMessage(ticket);
             await marcarEventoComoProcesado(evento.ticket_id);
-        }else{
+        } else {
             console.log('no hubo ticket');
         }
     }
 };
 
-module.exports = { procesarEventosPendientes };
+const obtenerThreadId = async (ticket_id) => {
+    const pool = getPool();
+    const [rows] = await pool.query(
+        `SELECT id FROM ost_thread WHERE object_id = ? AND object_type = 'T'`,
+        [ticket_id]
+    );
+    return rows.length > 0 ? rows[0].id : null;
+};
+
+const insertarRespuestaEnHilo = async (thread_id, mensajeHtml) => {
+    const pool = getPool();
+
+    const [entryResult] = await pool.query(
+        `INSERT INTO ost_thread_entry (
+            thread_id, pid, staff_id, user_id, type, poster,
+            source, body, format, ip_address, created, updated
+        ) VALUES (
+            ?, ?, 1, 0, 'R', 'Sistema',
+            'web', ?, 'html', '::1', NOW(), NOW()
+        )`,
+        [thread_id, thread_id, mensajeHtml]
+    );
+
+    console.log('✅ Respuesta insertada correctamente en el hilo.');
+};
+
+module.exports = { procesarEventosPendientes, obtenerThreadId, insertarRespuestaEnHilo };

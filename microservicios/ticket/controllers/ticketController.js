@@ -8,6 +8,7 @@
  */
 
 const { procesarTickets } = require('../services/ticketService');
+const ticketService = require('../services/ticketService');
 
 /**
  * Método que se encarga de revisar cada cierto tiempo si hay algun nuevo ticket que tiene que ver con seguimiento de activos.
@@ -24,4 +25,20 @@ const checkEventos = async (req, res) => {
     }
 };
 
-module.exports = { checkEventos };
+const responderTicket = async (req, res) => {
+    const { ticket_id, clave_rastreo } = req.body;
+
+    if (!ticket_id || !clave_rastreo) {
+        return res.status(400).json({ error: 'ticket_id y clave_rastreo son requeridos.' });
+    }
+
+    try {
+        await ticketService.insertarRespuestaAutomatica(ticket_id, clave_rastreo);
+        res.status(200).json({ message: 'Respuesta agregada al ticket exitosamente.' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error al insertar respuesta en el ticket.' });
+    }
+};
+
+module.exports = { checkEventos, responderTicket };
