@@ -142,6 +142,7 @@ function mostrarDatosEnModal(datos) {
     document.getElementById("campoFolio").textContent = datos.FolioImagen;
     document.getElementById("campoNumeroEmpleado").textContent = datos.NumeroEmpleado;
     document.getElementById("campoNombre").textContent = datos.NombreEmpleado;
+    document.getElementById("campoPuesto").textContent = datos.PuestoEmpleado;
     document.getElementById("campoNombreEquipo").textContent = datos.NombreEquipo;
     document.getElementById("campoSucursal").textContent = datos.SucursalEmpleado;
     document.getElementById("campoCorreo").textContent = datos.CorreoEmpleado;

@@ -107,7 +107,7 @@ Gracias por usar nuestro servicio.
 
                         const etapas = await obtenerEtapasValidasPorEquipo(equipo_id);
                         if (!etapas) console.error("No se encontraron las etapas para el equipo requerido.");
-                        await enviarCorreoEncargado(etapas[1], tracking_id);
+                        await enviarCorreoEncargado(etapas[1], tracking_id, usuario, email, departamento, equipo);
 
                         console.log(`📩 Correo enviado a supervisor con correo ${etapas[1].correo_encargado} con tracking ID: ${tracking_id}`);
 

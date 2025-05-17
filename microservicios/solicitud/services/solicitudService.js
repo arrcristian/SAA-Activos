@@ -28,7 +28,7 @@ const obtenerEtapasValidasPorEquipo = async (id_equipo) => {
  * @param {string} clave_rastreo - Clave de rastreo de la solicitud.
  * @returns {Promise<void>}
  */
-const enviarCorreoEncargado = async (etapa, clave_rastreo) => {
+const enviarCorreoEncargado = async (etapa, clave_rastreo, usuario, email, departamento, equipo) => {
     if (!etapa?.correo_encargado || !etapa?.nombre_encargado) {
         console.warn("No se envió correo: falta nombre o correo del encargado.");
         return;
@@ -38,7 +38,7 @@ const enviarCorreoEncargado = async (etapa, clave_rastreo) => {
     const enlaceRechazar = `${process.env.APP_URL}/api/solicitudes/respuesta?clave_rastreo=${clave_rastreo}&respuesta=no&etapa_esperada=${encodeURIComponent(etapa.nombre_etapa)}`;
 
     const asunto = `Autorización pendiente: ${etapa.nombre_etapa}`;
-    const mensaje = generarEmailAutorizacion(etapa.nombre_encargado, etapa.nombre_etapa, clave_rastreo, enlaceAprobar, enlaceRechazar);
+    const mensaje = generarEmailAutorizacion(etapa.nombre_encargado, etapa.nombre_etapa, clave_rastreo, enlaceAprobar, enlaceRechazar, usuario, email, departamento, equipo);
 
     await sendEmail(etapa.correo_encargado, asunto, mensaje, true);
 };
@@ -52,23 +52,47 @@ const enviarCorreoEncargado = async (etapa, clave_rastreo) => {
  * @param {string} enlaceRechazar - Enlace para poder cancelar la solicitud.
  * @returns {string} El correo que se enviara al encargado de autorizar la actualización al siguiente estado.
  */
-const generarEmailAutorizacion = (nombreEncargado, nombreEtapa, clave_rastreo, enlaceAprobar, enlaceRechazar) => {
+const generarEmailAutorizacion = (
+    nombreEncargado,
+    nombreEtapa,
+    clave_rastreo,
+    enlaceAprobar,
+    enlaceRechazar,
+    usuario,
+    email,
+    departamento,
+    equipo
+) => {
     return `
     <html>
-    <body>
-        <p>Estimado(a) ${nombreEncargado},</p>
-        <p>La solicitud con clave de rastreo <strong>${clave_rastreo}</strong> ha avanzado y requiere su intervención.</p>
-        <p>Se necesita la <strong>${nombreEtapa.toLowerCase()}</strong>. Elija una de las siguientes opciones:</p>
+    <body style="font-family: Arial, sans-serif; color: #333;">
+        <p>Estimado(a) <strong>${nombreEncargado}</strong>,</p>
+
+        <p>Se ha generado una nueva solicitud que requiere su <strong>${nombreEtapa.toLowerCase()}</strong>.</p>
+
+        <h3 style="color: #444;">🔍 Detalles de la solicitud:</h3>
+        <ul style="line-height: 1.6;">
+            <li><strong>Clave de rastreo:</strong> ${clave_rastreo}</li>
+            <li><strong>Solicitante:</strong> ${usuario}</li>
+            <li><strong>Correo del solicitante:</strong> ${email}</li>
+            <li><strong>Departamento:</strong> ${departamento}</li>
+            <li><strong>Equipo solicitado:</strong> ${equipo}</li>
+        </ul>
+
+        <p>Por favor, seleccione una opción para continuar con el flujo de autorización:</p>
+
         <p>
-            <a href="${enlaceAprobar}" style="display:inline-block;padding:10px;background-color:green;color:white;text-decoration:none;border-radius:5px;">
-                ✅ Autorizar
+            <a href="${enlaceAprobar}" style="display:inline-block;padding:12px 20px;background-color:#28a745;color:white;text-decoration:none;border-radius:5px;font-weight:bold;">
+                ✅ Autorizar Solicitud
             </a>
             &nbsp;&nbsp;
-            <a href="${enlaceRechazar}" style="display:inline-block;padding:10px;background-color:red;color:white;text-decoration:none;border-radius:5px;">
-                ❌ Cancelar
+            <a href="${enlaceRechazar}" style="display:inline-block;padding:12px 20px;background-color:#dc3545;color:white;text-decoration:none;border-radius:5px;font-weight:bold;">
+                ❌ Cancelar Solicitud
             </a>
         </p>
-        <p>Saludos cordiales,<br>Equipo de Soporte Técnico</p>
+
+        <p>Gracias por su atención y colaboración.</p>
+        <p>Atentamente,<br><strong>Equipo de Soporte Técnico</strong></p>
     </body>
     </html>
     `;
@@ -103,7 +127,7 @@ const cambiarEstadoSolicitud = async (clave_rastreo) => {
     if (actualizado) {
         // ⚠️ Solo se envía correo si hay una etapa después
         if (etapas[indiceActual + 2]) {
-            await enviarCorreoEncargado(etapas[indiceActual + 2], clave_rastreo);
+            await enviarCorreoEncargado(etapas[indiceActual + 2], clave_rastreo, solicitud.usuario, solicitud.email, solicitud.departamento, solicitud.tipo_equipo);
         }
 
         return {
@@ -241,7 +265,7 @@ module.exports = {
     finalizarSolicitudConCorreo,
     cambiarEstadoSolicitud,
     cancelarSolicitud,
-    obtenerEtapasValidasPorEquipo, 
+    obtenerEtapasValidasPorEquipo,
     enviarCorreoEncargado,
     validarYActualizarEstado,
     validarYCancelarSolicitud

@@ -21,6 +21,7 @@ async function buscarEquipoPorSerie(serie) {
     const serieSegura = serie.replace(/'/g, "''");
     const query = `SELECT [Numero de Empleado] AS NumeroEmpleado,
                   [Nombre] AS NombreEmpleado,
+                  [Puesto] AS PuestoEmpleado,
                   [Nombre de Equipo] AS NombreEquipo,
                   [Sucursal] AS SucursalEmpleado,
                   [Correo] AS CorreoEmpleado,

@@ -107,6 +107,8 @@ const obtenerSolicitudPorClave = async (clave_rastreo) => {
                 s.clave_rastreo,
                 s.usuario,
                 s.resolutor,
+                s.email,
+                s.departamento,
                 s.fecha_creacion,
                 s.fecha_actualizacion,
                 s.id_etapa,
