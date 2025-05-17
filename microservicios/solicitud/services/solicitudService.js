@@ -34,8 +34,8 @@ const enviarCorreoEncargado = async (etapa, clave_rastreo) => {
         return;
     }
 
-    const enlaceAprobar = `${process.env.APP_URL}/api/solicitudes/respuesta?clave_rastreo=${clave_rastreo}&respuesta=si`;
-    const enlaceRechazar = `${process.env.APP_URL}/api/solicitudes/respuesta?clave_rastreo=${clave_rastreo}&respuesta=no`;
+    const enlaceAprobar = `${process.env.APP_URL}/api/solicitudes/respuesta?clave_rastreo=${clave_rastreo}&respuesta=si&etapa_esperada=${encodeURIComponent(etapa.nombre_etapa)}`;
+    const enlaceRechazar = `${process.env.APP_URL}/api/solicitudes/respuesta?clave_rastreo=${clave_rastreo}&respuesta=no&etapa_esperada=${encodeURIComponent(etapa.nombre_etapa)}`;
 
     const asunto = `Autorización pendiente: ${etapa.nombre_etapa}`;
     const mensaje = generarEmailAutorizacion(etapa.nombre_encargado, etapa.nombre_etapa, clave_rastreo, enlaceAprobar, enlaceRechazar);
@@ -200,10 +200,49 @@ const finalizarSolicitudConCorreo = async (clave_rastreo, correoEmpleado, imagen
     return { exito: true };
 };
 
+const validarYActualizarEstado = async (clave_rastreo, etapa_esperada) => {
+    const solicitud = await obtenerSolicitudPorClave(clave_rastreo);
+    if (!solicitud) return { exito: false, mensaje: "Solicitud no encontrada." };
+
+    const { id_etapa, id_equipo } = solicitud;
+    const etapas = await obtenerEtapasValidasPorEquipo(id_equipo);
+    const indiceActual = etapas.findIndex(e => e.id_etapa === id_etapa);
+
+    if (indiceActual === -1) return { exito: false, mensaje: "Etapa actual no válida." };
+    const siguienteEtapa = etapas[indiceActual + 1];
+
+    if (!siguienteEtapa || siguienteEtapa.nombre_etapa !== etapa_esperada) {
+        return { exito: false, mensaje: "No tienes autorización para cambiar a esta etapa." };
+    }
+
+    return await cambiarEstadoSolicitud(clave_rastreo);
+};
+
+const validarYCancelarSolicitud = async (clave_rastreo, etapa_esperada) => {
+    const solicitud = await obtenerSolicitudPorClave(clave_rastreo);
+    if (!solicitud) return { exito: false, mensaje: "Solicitud no encontrada." };
+
+    const { id_etapa, id_equipo } = solicitud;
+    const etapas = await obtenerEtapasValidasPorEquipo(id_equipo);
+    const indiceActual = etapas.findIndex(e => e.id_etapa === id_etapa);
+
+    if (indiceActual === -1) return { exito: false, mensaje: "Etapa actual no válida." };
+    const siguienteEtapa = etapas[indiceActual + 1];
+
+    if (!siguienteEtapa || siguienteEtapa.nombre_etapa !== etapa_esperada) {
+        return { exito: false, mensaje: "No tienes autorización para cancelar esta solicitud en esta etapa." };
+    }
+
+    return await cancelarSolicitud(clave_rastreo);
+};
+
+
 module.exports = {
     finalizarSolicitudConCorreo,
     cambiarEstadoSolicitud,
     cancelarSolicitud,
-    obtenerEtapasValidasPorEquipo, // opcional exportar
-    enviarCorreoEncargado // opcional exportar
+    obtenerEtapasValidasPorEquipo, 
+    enviarCorreoEncargado,
+    validarYActualizarEstado,
+    validarYCancelarSolicitud
 };

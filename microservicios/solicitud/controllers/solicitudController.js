@@ -8,9 +8,9 @@
  */
 
 const Solicitud = require('../models/solicitudModel');
-const { actualizarServiceTag, obtenerServiceTagPorClave, crearSolicitud, obtenerTodasLasSolicitudes, actualizarEstadoEnBD, obtenerSolicitudPorClave, obtenerHistorialDeSolicitud, cancelarSolicitudEnBD, obtenerTiposEquipo } = require('../repositories/solicitudRepository');
+const { actualizarServiceTag, obtenerServiceTagPorClave, crearSolicitud, obtenerTodasLasSolicitudes, actualizarEstadoEnBD, obtenerSolicitudPorClave, obtenerHistorialDeSolicitud, obtenerTiposEquipo } = require('../repositories/solicitudRepository');
 const sendEmail = require('../services/emailService');
-const { finalizarSolicitudConCorreo, cambiarEstadoSolicitud, cancelarSolicitud, enviarCorreoEncargado, obtenerEtapasValidasPorEquipo } = require('../services/solicitudService');
+const { finalizarSolicitudConCorreo, cambiarEstadoSolicitud, cancelarSolicitud, enviarCorreoEncargado, obtenerEtapasValidasPorEquipo, validarYActualizarEstado, validarYCancelarSolicitud } = require('../services/solicitudService');
 const crypto = require('crypto');
 
 /**
@@ -152,29 +152,27 @@ const obtenerSeguimiento = async (req, res) => {
  */
 const procesarRespuestaCorreo = async (req, res) => {
     try {
-        const { clave_rastreo, respuesta } = req.query;
+        const { clave_rastreo, respuesta, etapa_esperada } = req.query;
 
-        if (!clave_rastreo || !respuesta) {
+        if (!clave_rastreo || !respuesta || !etapa_esperada) {
             return res.status(400).send("Solicitud inválida.");
         }
 
-        let nuevoEstado = null;
-        let actualizado;
+        let resultado;
         if (respuesta === "si") {
-            actualizado = await cambiarEstadoSolicitud(clave_rastreo);
-            nuevoEstado = "actualizada";
+            resultado = await validarYActualizarEstado(clave_rastreo, etapa_esperada);
         } else if (respuesta === "no") {
-            actualizado = await cancelarSolicitud(clave_rastreo);
-            nuevoEstado = "cancelada";
+            resultado = await validarYCancelarSolicitud(clave_rastreo, etapa_esperada);
         } else {
             return res.status(400).send("Respuesta no válida.");
         }
 
-        if (actualizado.exito) {
-            return res.send(`✅ La solicitud con clave ${clave_rastreo} ha sido ${nuevoEstado}.`);
+        if (resultado.exito) {
+            return res.send(`✅ La solicitud con clave ${clave_rastreo} ha sido procesada correctamente.`);
         } else {
-            return res.status(404).send("❌ No se encontró la solicitud.");
+            return res.status(403).send(`❌ ${resultado.mensaje}`);
         }
+
     } catch (error) {
         console.error("❌ Error procesando respuesta del correo:", error);
         return res.status(500).send("Error interno del servidor.");

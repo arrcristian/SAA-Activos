@@ -286,7 +286,7 @@ async function finalizarSolicitud() {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                correoEmpleado: correo,
+                correoEmpleado: "kingue2811@gmail.com",
                 imagen: imagen,
                 nombre: nombre_empleado
             })
