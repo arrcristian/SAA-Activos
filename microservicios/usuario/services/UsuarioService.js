@@ -67,40 +67,6 @@ class UsuarioService {
         return { token, usuario: usuarioDB.usuario };
     }
     
-    /**
-     * Método que permite obtener el password a partir del correo.
-     * @param {string} correo - Correo del usuario. 
-     * @returns {Object} Objeto con el resultado obtenido.
-     */
-    async recuperarContrasena(correo) {
-        const usuario = await UsuarioRepository.obtenerUsuarioPorCorreo(correo);
-        if (!usuario) {
-            throw { status: 404, message: "No se encontró una cuenta con ese correo." };
-        }
-
-        const nuevaContrasena = crypto.randomBytes(4).toString('hex'); 
-
-        await UsuarioRepository.actualizarContrasena(usuario.id, nuevaContrasena);
-
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
-
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: correo,
-            subject: "Recuperación de contraseña",
-            text: `Tu nueva contraseña temporal es: ${nuevaContrasena}. Cámbiala lo antes posible.`
-        };
-
-        await transporter.sendMail(mailOptions);
-
-        return { message: "Se ha enviado una nueva contraseña a tu correo." };
-    }
 }
 
 module.exports = new UsuarioService();

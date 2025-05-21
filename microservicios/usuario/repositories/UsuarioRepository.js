@@ -22,7 +22,7 @@ class UsuarioRepository {
         let connection;
         try {
             connection = await pool.getConnection();
-            const [rows] = await connection.execute('SELECT id, usuario, correo, nombre, tipo FROM usuarios');
+            const [rows] = await connection.execute('SELECT staff_id, username AS usuario, email AS correo FROM ost_staff');
             return rows;
         } catch (error) {
             console.error('Error al obtener usuarios:', error);
@@ -49,27 +49,6 @@ class UsuarioRepository {
             return rows.length > 0 ? rows[0] : null;
         } catch (error) {
             console.error('Error al obtener usuario de osTicket:', error);
-            throw error;
-        } finally {
-            if (connection) connection.release();
-        }
-    }
-
-    /**
-     * Método que permite actualizar el password de un usuario.
-     * @param {int} id - Id del usuario.
-     * @param {string} nuevaContrasena - Nuevo password del usuario.
-     * @returns {boolean} True si se actualizo con exito, False en caso contrario.
-     */
-    async actualizarContrasena(id, nuevaContrasena) {
-        let connection;
-        try {
-            connection = await pool.getConnection();
-            const hashedPass = await bcrypt.hash(nuevaContrasena, 10);
-            await connection.execute('UPDATE usuarios SET contrasena = ? WHERE id = ?', [hashedPass, id]);
-            return true;
-        } catch (error) {
-            console.error('Error al actualizar contraseña:', error);
             throw error;
         } finally {
             if (connection) connection.release();

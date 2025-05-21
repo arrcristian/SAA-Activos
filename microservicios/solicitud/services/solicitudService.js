@@ -224,6 +224,13 @@ const finalizarSolicitudConCorreo = async (clave_rastreo, correoEmpleado, imagen
     return { exito: true };
 };
 
+/**
+ * Método que valida si la solicitud se encuentra en la etapa correcta y permite avanzar a la siguiente etapa,
+ * si coincide con la etapa esperada. Verifica la secuencia de etapas válidas para el equipo correspondiente.
+ * @param {string} clave_rastreo - Clave de rastreo de la solicitud.
+ * @param {string} etapa_esperada - Nombre de la siguiente etapa esperada para continuar con el flujo.
+ * @returns {Object} Objeto con el resultado del intento de actualización del estado.
+ */
 const validarYActualizarEstado = async (clave_rastreo, etapa_esperada) => {
     const solicitud = await obtenerSolicitudPorClave(clave_rastreo);
     if (!solicitud) return { exito: false, mensaje: "Solicitud no encontrada." };
@@ -242,6 +249,13 @@ const validarYActualizarEstado = async (clave_rastreo, etapa_esperada) => {
     return await cambiarEstadoSolicitud(clave_rastreo);
 };
 
+/**
+ * Método que valida si la solicitud puede ser cancelada en la etapa actual, verificando si la etapa esperada
+ * coincide con la secuencia de etapas válidas para el equipo asignado a la solicitud.
+ * @param {string} clave_rastreo - Clave de rastreo de la solicitud.
+ * @param {string} etapa_esperada - Nombre de la etapa en la que se permite realizar la cancelación.
+ * @returns {Object} Objeto con el resultado del intento de cancelación de la solicitud.
+ */
 const validarYCancelarSolicitud = async (clave_rastreo, etapa_esperada) => {
     const solicitud = await obtenerSolicitudPorClave(clave_rastreo);
     if (!solicitud) return { exito: false, mensaje: "Solicitud no encontrada." };
